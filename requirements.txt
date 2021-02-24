@@ -1,9 +1,14 @@
 astroid==2.5
+greenlet==1.0.0
 isort==5.7.0
 lazy-object-proxy==1.5.2
 mccabe==0.6.1
 pika==1.2.0
+playwright==1.8.0a1
+pyee==8.1.0
 pylint==2.7.0
 python-dotenv==0.15.0
+robotframework==3.2.2
 toml==0.10.2
+typing-extensions==3.7.4.3
 wrapt==1.12.1
