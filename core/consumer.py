@@ -51,6 +51,7 @@ def on_message_callback(ch: BlockingChannel, method: Basic.Deliver, properties: 
   # Envia a resposta para fila de resposta
   ch.queue_declare(properties.reply_to)
   ch.basic_publish('', properties.reply_to, json.dumps(request, ensure_ascii=False), BasicProperties(correlation_id=properties.correlation_id))
+  logger.info(" [✓] Result published on '{}' queue".format(properties.reply_to))
 
 
 def parse_result(file):
@@ -80,7 +81,7 @@ def callback_wrapper(ch: BlockingChannel, method: Basic.Deliver, properties: Bas
   except Exception as e:
     ch.basic_publish(
       '',
-      '{0}.error'.format(env('RABBIT_QUEUE_PREFIX', 'project-zeta')),
+      '{0}.error'.format(env('RABBIT_QUEUE_PREFIX', 'icts-crawler')),
       json.dumps({
         'properties': properties.__dict__,
         'body': '%r' % body,

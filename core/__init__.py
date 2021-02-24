@@ -12,7 +12,7 @@ def _consume():
   Se conecta ao RabbitMQ, configura as filas utilizadas e começa a consumir da fila de input
   '''
 
-  queue_prefix = env('RABBIT_QUEUE_PREFIX', 'project-zeta')
+  queue_prefix = env('RABBIT_QUEUE_PREFIX', 'icts-crawler')
   conn = BlockingConnection(ConnectionParameters(
     env('RABBITMQ_HOST', '127.0.0.1'),
     credentials=PlainCredentials(

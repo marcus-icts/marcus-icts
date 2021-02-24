@@ -1,4 +1,4 @@
-# Project Zeta (subject to change)
+# ICTS Crawler (subject to change)
 
 ## Requisitos
 	- Python 3.9.1 ou superior;

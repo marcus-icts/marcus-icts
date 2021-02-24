@@ -1,5 +1,5 @@
 *** Settings ***
-Library  ../robot/libs-icts/Navegacao.py
+Library  ../core/robot-libs/CoreLib.py
 
 *** Tasks ***
 Buscar em Compras Publicas Ecuador
@@ -10,3 +10,4 @@ Buscar em Compras Publicas Ecuador
     Esperar até que elemento esteja visivel    \#Exportar_a_Excel1
     Pegar dados da tabela em JSON              \#Exportar_a_Excel1  2  3
     Fechar o navegador
+    [Teardown]  Fechar navegador e parar playwright

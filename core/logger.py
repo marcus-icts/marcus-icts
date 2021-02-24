@@ -2,13 +2,13 @@ import logging
 from .env import env
 
 def get_logger():
-  return logging.getLogger('zeta-logger')
+  return logging.getLogger('icts-crawler')
 
 def setup_logger():
-  logger = logging.getLogger('zeta-logger')
+  logger = logging.getLogger('icts-crawler')
   logger.setLevel(logging.INFO)
 
-  fh = logging.FileHandler('logs/zeta.log')
+  fh = logging.FileHandler('logs/crawler.log')
   fh.setLevel(env('LOGGER_LEVEL', 'ERROR'))
   fh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
 
