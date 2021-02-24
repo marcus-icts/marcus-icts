@@ -1,32 +1,94 @@
 import json
 
-from robot.api.deco import keyword
+from robot.api.deco import keyword, library
 from playwright.sync_api import sync_playwright
 
 from utils import write_results
 
+@library(scope='GLOBAL', version='0.0.1')
 class CoreLib(object):
+  '''
+  Biblioteca utilizada para escrever os crawlers da ICTS. Esta biblioteca fornece
+  palavras chaves que poderão ser utilizadas para escrever scripts do RobotFramework
+  para realizar a busca de dados em diversos sites da internet. Caso algum site possua
+  alguma estrutura incompatível com esta biblioteca, por favor solicitar o desenvolvimento
+  de alguma keyword específica para o site em questão. Abaixo estarão descrita as
+  palavras chaves (bem como seu funcionamento e parâmetros) que a biblioteca fornece.
+  '''
   @keyword('Abrir o navegador em')
-  def open_browser(self, url, headless = True, slow_mo: float = None):
+  def open_browser(self, url: str, headless: bool = True, slow_mo: float = None):
+    '''
+    Inicializa o serviço do playwright, executa o navegador (firefox) e abre uma página na URL especificada.
+
+    Parâmetros:
+      - `url`: endereço o qual o navegador deverá acessar
+      - `headless`: boleando para configurar se o navegador irá executar em modo headless ou headful
+      - `slow_mo`: tempo (em milisegundos) em que o `Playwright` deverá esperar entre suas ações - útil para debug
+
+    Exemplos:
+    | Abrir o navegador em | www.google.com |
+    | Abrir o navegador em | www.google.com | False |
+    | Abrir o navegador em | www.google.com | False | 3000 |
+    '''
     self.playwright = sync_playwright().start()
     self.browser = self.playwright.firefox.launch(headless=headless, slow_mo=slow_mo)
     self.page = self.browser.new_page()
     self.page.goto(url)
 
   @keyword('Clicar em')
-  def click_at(self, selector):
+  def click_at(self, selector: str):
+    '''
+    Clica no elemento que corresponde ao `selector` informado.
+
+    Parâmetros:
+    - `selector`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+
+    Exemplo:
+    | Clicar em | .meu-botao |
+    '''
     self.page.click(selector)
 
   @keyword('Digitar texto em campo')
-  def input_text(self, text: str, selector):
+  def input_text(self, text: str, selector: str):
+    '''
+    Preenche o `input` que corresponde ao `selector` com o `text` informado
+
+    Parâmetros:
+    - `text`: texto a ser preenchido no campo
+    - `selector`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+
+    Exemplo:
+    | Digitar texto em campo | meuemail@gmail.com | \\#email-input |
+    '''
     self.page.fill(selector, text)
 
   @keyword('Esperar até que elemento esteja visivel')
-  def wait_for_element(self, selector):
+  def wait_for_element(self, selector: str):
+    '''
+    Espera até que o elemento correspondente ao `selector` esteja visível na página.
+
+    Parâmetros:
+    - `selector`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+
+    Exemplo:
+    | Esperar até que elemento esteja visivel | .minha-tabela |
+    '''
     self.page.wait_for_selector(selector)
 
   @keyword('Pegar dados da tabela em JSON')
-  def dump_table(self, selector, header_at = 1, data_begins_at = 2):
+  def dump_table(self, selector: str, header_at: int = 1, data_begins_at: int = 2):
+    '''
+    Realiza o parse da tabela correspondete ao `selector` para JSON e escreve o resultado no arquivo XML de saída do Robot (tag `crawler-result`).
+
+    Parâmetros:
+    - `selector`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+    - `header_at`: em qual linha da tabela o header está presente
+    - `data_begins_at`: em qual linha da tabela os dados começam
+
+    Exemplos:
+    | Pegar dados da tabela em JSON | .minha-tabela |
+    | Pegar dados da tabela em JSON | .minha-tabela | 2 | 4 |
+    '''
     table_data: list[dict] = []
     raw_data = self.page.query_selector(selector).inner_text().split('\n')
     headers = raw_data[header_at - 1].split('\t')
@@ -40,6 +102,13 @@ class CoreLib(object):
 
   @keyword('Fechar navegador e parar playwright')
   def teardown(self):
+    '''
+    Utilizado para fechar o navegador e parar o serviço do playwright. É recomendado
+    sempre utilizar essa palavra chave no `Teardown` das tarefas para que sempre seja
+    executada ao final da tarefa (em caso de sucesso ou falha), dessa forma não deixando
+    o serviço do playwright rodando mesmo após a tarefa terminar. Caso o serviço do playwright
+    continue executando mesmo após a terefa terminar pode ocasionar problemas nas próximas tarefas.
+    '''
     self.page.close()
     self.browser.close()
     self.playwright.stop()
