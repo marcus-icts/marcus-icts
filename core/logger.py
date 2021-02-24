@@ -1,5 +1,5 @@
 import logging
-from env import env
+from .env import env
 
 def get_logger():
   return logging.getLogger('zeta-logger')

@@ -1,14 +1,13 @@
-#!/usr/bin/env python
 import sys, os, json
 from pika import BlockingConnection, ConnectionParameters
 from pika.credentials import PlainCredentials
 from pika.exceptions import AMQPConnectionError
 
-from logger import setup_logger, get_logger
-from env import init_env, env
-from consumer import callback_wrapper
+from .logger import setup_logger, get_logger
+from .env import env, init_env
+from .consumer import callback_wrapper
 
-def main():
+def _consume():
   '''
   Se conecta ao RabbitMQ, configura as filas utilizadas e começa a consumir da fila de input
   '''
@@ -35,14 +34,14 @@ def _exit(code):
     os._exit(code)
     raise
 
-if __name__ == "__main__":
+def main():
   init_env()
 
   setup_logger()
   logger = get_logger()
 
   try:
-    main()
+    _consume()
   except KeyboardInterrupt:
     _exit(0)
   except AMQPConnectionError:

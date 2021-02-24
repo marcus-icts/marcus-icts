@@ -3,9 +3,9 @@ from types import SimpleNamespace
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
 
-from logger import get_logger
-from env import env
-from exceptions import InvalidMessageException, InvalidMessagePayloadException
+from .logger import get_logger
+from .env import env
+from .exceptions import InvalidMessageException, InvalidMessagePayloadException
 
 def on_message_callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes):
   '''
