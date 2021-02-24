@@ -9,5 +9,4 @@ Buscar em Compras Publicas Ecuador
     Clicar em                                  \#formRadio > table:nth-child(2) > tbody:nth-child(1) > tr:nth-child(6) > td:nth-child(2) > div:nth-child(1) > div:nth-child(1) > a:nth-child(1)
     Esperar até que elemento esteja visivel    \#Exportar_a_Excel1
     Pegar dados da tabela em JSON              \#Exportar_a_Excel1  2  3
-    Fechar o navegador
     [Teardown]  Fechar navegador e parar playwright

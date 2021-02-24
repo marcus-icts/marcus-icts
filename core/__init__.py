@@ -6,6 +6,7 @@ from pika.exceptions import AMQPConnectionError
 from .logger import setup_logger, get_logger
 from .env import env, init_env
 from .consumer import callback_wrapper
+from .robot_runner import exec_robot
 
 def _consume():
   '''
@@ -34,7 +35,7 @@ def _exit(code):
     os._exit(code)
     raise
 
-def main():
+def consume():
   init_env()
 
   setup_logger()
@@ -50,4 +51,13 @@ def main():
   except Exception as e:
     logger.error("Erro não esperado: {0}. {1}.".format(sys.exc_info()[0], repr(e)))
     _exit(1)
+
+def run(subject, related_data):
+  init_env()
+
+  setup_logger()
+
+  related_data = None if related_data is None else json.loads(related_data)
+  result = exec_robot(subject, related_data)
+  get_logger().info(result)
 
