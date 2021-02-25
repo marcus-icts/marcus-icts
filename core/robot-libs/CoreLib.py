@@ -106,31 +106,54 @@ class CoreLib(object):
 
     """
     table_data: list[dict] = []
-    self.page.wait_for_selector(selector)
-    table_lines = self.page.query_selector_all(selector)
-    for table_link in table_lines:
-      table_link.click()
+    has_more_providers = True
+    while has_more_providers:
+      self.page.wait_for_selector(selector)
+      table_lines = self.page.query_selector_all(selector)
+      for table_link in table_lines:
+        provider_details = {}
+        table_link.click()
 
-      provider_details = {}
-      self.page.wait_for_selector('table.ui-panelgrid.ui-widget tbody tr:not(:first-child)')
+        # Provider details
+        provider_details_raw = self.page.wait_for_selector('table.ui-panelgrid.ui-widget tbody').inner_text().split('\n')
+        i = 0
+        for provider_details_raw_line in provider_details_raw:
+          modal_data_columns = provider_details_raw_line.split('\t')
+          if modal_data_columns[0]:
+            index = modal_data_columns[0].replace(':', '').replace(' ', '_').lower()
+            provider_details[index] = modal_data_columns[1] if len(modal_data_columns) == 2 else ''
+          i += 1
+          if i == 3:
+            break
+        provider_details['sitio_web'] = provider_details_raw[5][0]
 
-      # Provider details
-      provider_details_raw = self.page.query_selector_all('table.ui-panelgrid.ui-widget tbody tr:not(:first-child):not(:last-child)')
-      for provider_details_raw_line in provider_details_raw:
-        modal_data_columns = provider_details_raw_line.inner_text().split('\t')
-        if modal_data_columns[0]:
-          index = modal_data_columns[0].replace(':', '').replace(' ', '_').lower()
-          provider_details[index] = modal_data_columns[1] if len(modal_data_columns) == 2 else ''
-      provider_details['sitio_web'] = self.page.wait_for_selector('table.ui-panelgrid.ui-widget tbody tr:last-child td').inner_text()
+        # Provided services
+        has_more_services = True
+        provided_services = []
+        while has_more_services:
+          provided_services.extend(self.page.wait_for_selector('tbody#comprasal_2\\:obsProveedores_data').inner_text().split('\n'))
 
-      # Assets and services provided
-      provided_services = self.page.query_selector_all('table.ui-panelgrid.ui-widget tbody tr:not(:first-child):not(:last-child)')
+          # Services pagination
+          next_services = self.page.query_selector('#comprasal_2\\:obsProveedores_paginator_bottom a.ui-paginator-next:not(.ui-state-disabled)')
+          if next_services:
+            next_services.click()
+          else:
+            has_more_services = False
 
-      self.page.click('a.ui-dialog-titlebar-close')
-      table_data.append({
-        'nombre': table_link.inner_text(),
-        'detalles_del_provedor': provider_details
-      })
+        self.page.click('a.ui-dialog-titlebar-close')
+        table_data.append({
+          'nombre': table_link.inner_text(),
+          'detalles_del_provedor': provider_details,
+          'bienes_obras_servicos': provided_services
+        })
+
+      # Providers pagination
+      next_providers = self.page.query_selector(
+        '#comprasal_1\\:resultados_paginator_bottom a.ui-paginator-next:not(.ui-state-disabled)')
+      if next_providers:
+        next_providers.click()
+      else:
+        has_more_providers = False
 
     write_results(json.dumps(table_data, ensure_ascii=False))
 
