@@ -3,7 +3,7 @@ Library  ../core/robot-libs/CoreLib.py
 
 *** Tasks ***
 Buscar em Consulta Rupc
-    Abrir o navegador em                                                    https://cnet.hacienda.gob.mx/servicios/consultaRUPC.jsf  false
+    Abrir o navegador em                                                    https://cnet.hacienda.gob.mx/servicios/consultaRUPC.jsf
     Clicar em                                                               //*[@id="consulta:tipoSol"]/div[2]
     Clicar em                                                               //*[@id="consulta:tipoSol_panel"]/div/ul/li[3]
     Esperar                                                                 300ms
