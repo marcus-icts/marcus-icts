@@ -2,7 +2,7 @@
 Library  ../core/robot-libs/CoreLib.py
 
 *** Tasks ***
-Buscar em Compras Publicas Ecuador
+Buscar em Compras Publicas Equador
     Abrir o navegador em                       https://www.compraspublicas.gob.ec/ProcesoContratacion/compras/EP/BusquedaProveedorCpc.cpe
     Clicar em                                  .cc-btn
     Digitar texto em campo                     ${razao_social}  \#txtRazonSocial

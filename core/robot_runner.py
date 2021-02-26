@@ -18,7 +18,7 @@ def parse_result(file):
     raise TaskFailedException(status.text)
 
   result = tree.find('./suite/test/kw/crawler-result')
-  return result.text
+  return result.text if result is not None else None
 
 def exec_robot(subject: str, related_data: Optional[dict] = None, correlation_id: Optional[int] = None):
   cwd = os.getcwd()
@@ -33,6 +33,7 @@ def exec_robot(subject: str, related_data: Optional[dict] = None, correlation_id
   logger.info('\tRobot task started...')
   run('{}/crawlers/{}.robot'.format(cwd, subject), output=output_file, log=None, report=None, console='quiet', variable=variables)
   logger.info('\t... robot task finished')
-  result = json.loads(parse_result(output_file))
+  result = parse_result(output_file)
+  result = json.loads(result) if result is not None else None
   os.remove(output_file)
   return result
