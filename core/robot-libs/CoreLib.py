@@ -1,5 +1,6 @@
 import json
 
+from robot.libraries.BuiltIn import BuiltIn
 from robot.api.deco import keyword, library
 from playwright.sync_api import sync_playwright
 
@@ -101,12 +102,17 @@ class CoreLib(object):
     write_results(json.dumps(table_data, ensure_ascii=False))
 
   @keyword('Extrair resultados CompraSal')
-  def extract_comprasal_data(self, selector: str):
+  def extract_comprasal_data(self):
     """"
+    Realiza o parse da tabela do CompraSal JSON e escreve o
+    resultado no arquivo XML de saída do Robot (tag `crawler-result`).
 
+    Exemplos:
+    | Extrair resultados CompraSal |
     """
     table_data: list[dict] = []
     has_more_providers = True
+    selector = "#comprasal_1 table tbody tr td:first-child a"
     while has_more_providers:
       self.page.wait_for_selector(selector)
       table_lines = self.page.query_selector_all(selector)
@@ -137,6 +143,7 @@ class CoreLib(object):
           next_services = self.page.query_selector('#comprasal_2\\:obsProveedores_paginator_bottom a.ui-paginator-next:not(.ui-state-disabled)')
           if next_services:
             next_services.click()
+            BuiltIn().sleep('200ms')
           else:
             has_more_services = False
 
@@ -152,6 +159,7 @@ class CoreLib(object):
         '#comprasal_1\\:resultados_paginator_bottom a.ui-paginator-next:not(.ui-state-disabled)')
       if next_providers:
         next_providers.click()
+        BuiltIn().sleep('200ms')
       else:
         has_more_providers = False
 
