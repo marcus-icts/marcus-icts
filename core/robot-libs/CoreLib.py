@@ -224,13 +224,41 @@ class CoreLib(object):
           clases_inscriptas_info = clase_inscripta_raw.inner_text().replace('\n', '').split('\t')
           clases_inscriptas.append(dict(zip(clases_inscriptas_headers, clases_inscriptas_info)))
 
+        # Representante Legal / Apoderado
+        representantes_legal = []
+        representante_legal_headers_raw = self.page.query_selector(
+          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvAdministradoresLegitimados tbody .tr-header").inner_text().split(
+          '\t')
+        representante_legal_headers = list(
+          map(lambda header: header.lower().replace(' ', '_'), representante_legal_headers_raw))
+
+        representantes_legal_raw = self.page.query_selector_all(
+          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvAdministradoresLegitimados tbody tr:not(.tr-header)")
+        for representante_legal_raw in representantes_legal_raw:
+          representante_legal_info = representante_legal_raw.inner_text().replace('\n', '').split('\t')
+          representantes_legal.append(dict(zip(representante_legal_headers, representante_legal_info)))
+
+        # Estado de la documentación
+        estado_documentacion = []
+        estado_documentacion_headers_raw = self.page.query_selector(
+          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvDocumentos tbody .tr-header").inner_text().split(
+          '\t')
+        estado_documentacion_legal_headers = list(
+          map(lambda header: header.lower().replace(' ', '_'), estado_documentacion_headers_raw))
+
+        estado_documentacion_raw = self.page.query_selector_all(
+          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvDocumentos tbody tr:not(.tr-header)")
+        for estado_documentacion_raw in estado_documentacion_raw:
+          estado_documentacion_info = estado_documentacion_raw.inner_text().replace('\n', '').split('\t')
+          estado_documentacion.append(dict(zip(estado_documentacion_legal_headers, estado_documentacion_info)))
+
         table_data.append({
           'datos_del_proveedor': datos_del_provedor,
           'datos_de_la_persona_fisica': datos_persona_fisica,
           'datos_conjugue': datos_conjugue,
           'classes_inscriptas': clases_inscriptas,
-          'representante_legal': '',
-          'estado_de_la_documentacion': ''
+          'representante_legal': representantes_legal,
+          'estado_de_la_documentacion': estado_documentacion
         })
         self.page.go_back()
 
