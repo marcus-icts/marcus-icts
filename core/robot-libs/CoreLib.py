@@ -326,3 +326,69 @@ class CoreLib(object):
         self.page.close()
         self.browser.close()
         self.playwright.stop()
+
+    @keyword('Pegar dados da página perfilProv')
+    def dump_page(self, name: str, phone: str, email: str, domicilio: str, cmc: str, clc: str, estado: str, condicion: str, contribuyente: str):
+        '''
+            Realiza o parse da página dos valores necessários.
+
+            Parâmetros:
+            - `name`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+            - `phone`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+            - `email`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+            - `domicilio`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+            - `cmc`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+            - `clc`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+            - `estado`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+            - `condicion`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+            - `contribuyente`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+            Exemplos:
+            | Pegar dados da página |
+            '''
+        table_data: list[dict] = []
+        header = ['nombre', 'teléfono', 'email', 'domocilio', 'cmc',
+                  'clc', 'estado', 'condición', 'tipo de contribuyente']
+        #header = []
+        if (self.page.query_selector(name)):
+            name_data = self.page.query_selector(name).inner_text()
+        else:
+            name_data = None
+        if (self.page.query_selector(phone)):
+            phone_data = self.page.query_selector(phone).inner_text()
+        else:
+            phone_data = None
+        if (self.page.query_selector(email)):
+            email_data = self.page.query_selector(email).inner_text()
+        else:
+            email_data = None
+        if(self.page.query_selector(domicilio)):
+            domicilio_data = self.page.query_selector(domicilio).inner_text()
+        else:
+            domicilio_data
+        if(self.page.query_selector(cmc)):
+            cmc_data = self.page.query_selector(cmc).inner_text()
+        else:
+            cmc_data = None
+        if(self.page.query_selector(clc)):
+            clc_data = self.page.query_selector(clc).inner_text()
+        else:
+            clc_data = None
+        if(self.page.query_selector(estado)):
+            estado_data = self.page.query_selector(estado).inner_text()
+        else:
+            estado_data = None
+        if(self.page.query_selector(condicion)):
+            condicion_data = self.page.query_selector(condicion).inner_text()
+        else:
+            condicion_data = None
+        if(self.page.query_selector(contribuyente)):
+            contribuyente_data = self.page.query_selector(
+                contribuyente).inner_text()
+        else:
+            contribuyente_data = None
+
+        body = [name_data, phone_data, email_data, domicilio_data, cmc_data,
+                clc_data, estado_data, condicion_data, contribuyente_data]
+
+        table_data.append(dict(zip(header, body)))
+        write_results(json.dumps(table_data, ensure_ascii=False))
