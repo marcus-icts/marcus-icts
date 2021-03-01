@@ -30,7 +30,7 @@ def on_message_callback(ch: BlockingChannel, method: Basic.Deliver, properties: 
   ch.basic_ack(method.delivery_tag)
 
   # Envia a resposta para fila de resposta
-  ch.queue_declare(properties.reply_to)
+  ch.queue_declare(properties.reply_to, durable=True)
   ch.basic_publish('', properties.reply_to, json.dumps(request, ensure_ascii=False))
   get_logger().info(" [✓] Result published on '{}' queue".format(properties.reply_to))
 
