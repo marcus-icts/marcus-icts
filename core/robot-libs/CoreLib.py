@@ -177,14 +177,22 @@ class CoreLib(object):
     """
     table_data: list[dict] = []
     has_more_providers = True
-    selector = "#ctl00_CPH1_UCBuscarProveedor_gvResultados tr:not(:first-child) td:first-child a"
+    selector = "#ctl00_CPH1_UCBuscarProveedor_gvResultados tr:not(:first-child):not(.pagination-gv) td:first-child a"
+    next_page = 2
+
     while has_more_providers:
       self.page.wait_for_selector(selector)
       table_links = self.page.query_selector_all(selector)
-      next_page = 2
-      for table_link in table_links:
+
+      for item_index in range(2, 11):
+      #for table_link in table_links:
+        table_link = self.page.query_selector("#ctl00_CPH1_UCBuscarProveedor_gvResultados tr:not(:first-child):not(.pagination-gv):nth-child({}) td:first-child a".format(item_index))
+        if not table_link:
+          break
+
         table_link.click()
         self.page.wait_for_selector('#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_upPanel > div:nth-of-type(2) .col-md-3')
+
         # Datos del Porvedor
         datos_del_provedor = {}
         provider_info = self.page.query_selector_all(
@@ -216,41 +224,45 @@ class CoreLib(object):
         # Clases inscriptas
         clases_inscriptas = []
         clases_inscriptas_headers_raw = self.page.query_selector(
-          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_pnlClasesInscriptas tbody .tr-header").inner_text().split('\t')
-        clases_inscriptas_headers = list(map(lambda header: header.lower().replace(' ', '_'), clases_inscriptas_headers_raw))
+          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_pnlClasesInscriptas tbody .tr-header")
+        if clases_inscriptas_headers_raw:
+          clases_inscriptas_headers_raw = clases_inscriptas_headers_raw.inner_text().split('\t')
+          clases_inscriptas_headers = list(map(lambda header: header.lower().replace(' ', '_'), clases_inscriptas_headers_raw))
 
-        clases_inscriptas_raw = self.page.query_selector_all("#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_pnlClasesInscriptas tbody tr:not(.tr-header)")
-        for clase_inscripta_raw in clases_inscriptas_raw:
-          clases_inscriptas_info = clase_inscripta_raw.inner_text().replace('\n', '').split('\t')
-          clases_inscriptas.append(dict(zip(clases_inscriptas_headers, clases_inscriptas_info)))
+          clases_inscriptas_raw = self.page.query_selector_all("#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_pnlClasesInscriptas tbody tr:not(.tr-header)")
+          for clase_inscripta_raw in clases_inscriptas_raw:
+            clases_inscriptas_info = clase_inscripta_raw.inner_text().replace('\n', '').split('\t')
+            clases_inscriptas.append(dict(zip(clases_inscriptas_headers, clases_inscriptas_info)))
 
         # Representante Legal / Apoderado
         representantes_legal = []
         representante_legal_headers_raw = self.page.query_selector(
-          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvAdministradoresLegitimados tbody .tr-header").inner_text().split(
-          '\t')
-        representante_legal_headers = list(
-          map(lambda header: header.lower().replace(' ', '_'), representante_legal_headers_raw))
+          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvAdministradoresLegitimados tbody .tr-header")
+        if representante_legal_headers_raw:
+          representante_legal_headers_raw = representante_legal_headers_raw.inner_text().split('\t')
+          representante_legal_headers = list(
+            map(lambda header: header.lower().replace(' ', '_'), representante_legal_headers_raw))
 
-        representantes_legal_raw = self.page.query_selector_all(
-          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvAdministradoresLegitimados tbody tr:not(.tr-header)")
-        for representante_legal_raw in representantes_legal_raw:
-          representante_legal_info = representante_legal_raw.inner_text().replace('\n', '').split('\t')
-          representantes_legal.append(dict(zip(representante_legal_headers, representante_legal_info)))
+          representantes_legal_raw = self.page.query_selector_all(
+            "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvAdministradoresLegitimados tbody tr:not(.tr-header)")
+          for representante_legal_raw in representantes_legal_raw:
+            representante_legal_info = representante_legal_raw.inner_text().replace('\n', '').split('\t')
+            representantes_legal.append(dict(zip(representante_legal_headers, representante_legal_info)))
 
         # Estado de la documentación
         estado_documentacion = []
         estado_documentacion_headers_raw = self.page.query_selector(
-          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvDocumentos tbody .tr-header").inner_text().split(
-          '\t')
-        estado_documentacion_legal_headers = list(
-          map(lambda header: header.lower().replace(' ', '_'), estado_documentacion_headers_raw))
+          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvDocumentos tbody .tr-header")
+        if estado_documentacion_headers_raw:
+          estado_documentacion_headers_raw = estado_documentacion_headers_raw.inner_text().split('\t')
+          estado_documentacion_legal_headers = list(
+            map(lambda header: header.lower().replace(' ', '_'), estado_documentacion_headers_raw))
 
-        estado_documentacion_raw = self.page.query_selector_all(
-          "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvDocumentos tbody tr:not(.tr-header)")
-        for estado_documentacion_raw in estado_documentacion_raw:
-          estado_documentacion_info = estado_documentacion_raw.inner_text().replace('\n', '').split('\t')
-          estado_documentacion.append(dict(zip(estado_documentacion_legal_headers, estado_documentacion_info)))
+          estado_documentacion_raw = self.page.query_selector_all(
+            "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvDocumentos tbody tr:not(.tr-header)")
+          for estado_documentacion_raw in estado_documentacion_raw:
+            estado_documentacion_info = estado_documentacion_raw.inner_text().replace('\n', '').split('\t')
+            estado_documentacion.append(dict(zip(estado_documentacion_legal_headers, estado_documentacion_info)))
 
         table_data.append({
           'datos_del_proveedor': datos_del_provedor,
@@ -260,17 +272,17 @@ class CoreLib(object):
           'representante_legal': representantes_legal,
           'estado_de_la_documentacion': estado_documentacion
         })
+
         self.page.go_back()
 
-      has_more_providers = False
-
-      # next_providers = self.page.query_selector(
-      #   '#comprasal_1\\:resultados_paginator_bottom a.ui-paginator-next:not(.ui-state-disabled)')
-      # if next_providers:
-      #   next_providers.click()
-      #   BuiltIn().sleep('200ms')
-      # else:
-      #   has_more_providers = False
+      next_providers = self.page.query_selector(
+        ".pagination-gv tr td a[href=\"javascript:__doPostBack('ctl00$CPH1$UCBuscarProveedor$gvResultados','Page${}')\"]".format(next_page))
+      if next_providers:
+        next_providers.click()
+        BuiltIn().sleep('1500ms')
+        next_page += 1
+      else:
+        has_more_providers = False
 
     write_results(json.dumps(table_data, ensure_ascii=False))
 
