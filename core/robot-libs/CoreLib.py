@@ -182,10 +182,8 @@ class CoreLib(object):
 
     while has_more_providers:
       self.page.wait_for_selector(selector)
-      table_links = self.page.query_selector_all(selector)
 
       for item_index in range(2, 11):
-      #for table_link in table_links:
         table_link = self.page.query_selector("#ctl00_CPH1_UCBuscarProveedor_gvResultados tr:not(:first-child):not(.pagination-gv):nth-child({}) td:first-child a".format(item_index))
         if not table_link:
           break
