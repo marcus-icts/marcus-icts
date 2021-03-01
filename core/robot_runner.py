@@ -20,7 +20,7 @@ def parse_result(file):
   result = tree.find('./suite/test/kw/crawler-result')
   return result.text if result is not None else None
 
-def exec_robot(subject: str, related_data: Optional[dict] = None, correlation_id: Optional[int] = None):
+def exec_robot(subject: str, related_data: Optional[dict] = None):
   cwd = os.getcwd()
   logger = get_logger()
 
@@ -28,7 +28,7 @@ def exec_robot(subject: str, related_data: Optional[dict] = None, correlation_id
   variables = [''] if related_data is None else list(map(lambda kv: '{0}:{1}'.format(kv, related_data[kv]), related_data))
 
   # Gera o nome do arquivo de output
-  output_file = '{}/robot/results/{}.xml'.format(cwd, time.time()) if correlation_id is None else '{}/robot/results/{}-{}.xml'.format(cwd, time.time(), correlation_id)
+  output_file = '{}/robot/results/{}.xml'.format(cwd, time.time())
 
   logger.info('\tRobot task started...')
   run('{}/crawlers/{}.robot'.format(cwd, subject), output=output_file, log=None, report=None, console='quiet', variable=variables)
