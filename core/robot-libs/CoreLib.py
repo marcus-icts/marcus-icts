@@ -2,10 +2,14 @@ import json
 
 import robot
 from robot.libraries.BuiltIn import BuiltIn
+
 from robot.api.deco import keyword, library
+from robot.libraries.BuiltIn import BuiltIn
 from playwright.sync_api import sync_playwright
+from robot.api.logger import console
 
 from utils import write_results
+
 
 @library(scope='GLOBAL', version='0.0.1')
 class CoreLib(object):
@@ -17,6 +21,7 @@ class CoreLib(object):
   de alguma keyword específica para o site em questão. Abaixo estarão descrita as
   palavras chaves (bem como seu funcionamento e parâmetros) que a biblioteca fornece.
   '''
+
   @keyword('Abrir o navegador em')
   def open_browser(self, url: str, headless: bool = True, slow_mo: float = None):
     '''
@@ -33,7 +38,8 @@ class CoreLib(object):
     | Abrir o navegador em | www.google.com | False | 3000 |
     '''
     self.playwright = sync_playwright().start()
-    self.browser = self.playwright.firefox.launch(headless=headless, slow_mo=slow_mo)
+    self.browser = self.playwright.firefox.launch(
+      headless=headless, slow_mo=slow_mo)
     self.page = self.browser.new_page()
     self.page.goto(url)
 
@@ -122,7 +128,8 @@ class CoreLib(object):
         table_link.click()
 
         # Provider details
-        provider_details_raw = self.page.wait_for_selector('table.ui-panelgrid.ui-widget tbody').inner_text().split('\n')
+        provider_details_raw = self.page.wait_for_selector('table.ui-panelgrid.ui-widget tbody').inner_text().split(
+          '\n')
         i = 0
         for provider_details_raw_line in provider_details_raw:
           modal_data_columns = provider_details_raw_line.split('\t')
@@ -138,10 +145,12 @@ class CoreLib(object):
         has_more_services = True
         provided_services = []
         while has_more_services:
-          provided_services.extend(self.page.wait_for_selector('tbody#comprasal_2\\:obsProveedores_data').inner_text().split('\n'))
+          provided_services.extend(
+            self.page.wait_for_selector('tbody#comprasal_2\\:obsProveedores_data').inner_text().split('\n'))
 
           # Services pagination
-          next_services = self.page.query_selector('#comprasal_2\\:obsProveedores_paginator_bottom a.ui-paginator-next:not(.ui-state-disabled)')
+          next_services = self.page.query_selector(
+            '#comprasal_2\\:obsProveedores_paginator_bottom a.ui-paginator-next:not(.ui-state-disabled)')
           if next_services:
             next_services.click()
             BuiltIn().sleep('200ms')
@@ -184,12 +193,15 @@ class CoreLib(object):
       self.page.wait_for_selector(selector)
 
       for item_index in range(2, 11):
-        table_link = self.page.query_selector("#ctl00_CPH1_UCBuscarProveedor_gvResultados tr:not(:first-child):not(.pagination-gv):nth-child({}) td:first-child a".format(item_index))
+        table_link = self.page.query_selector(
+          "#ctl00_CPH1_UCBuscarProveedor_gvResultados tr:not(:first-child):not(.pagination-gv):nth-child({}) td:first-child a".format(
+            item_index))
         if not table_link:
           break
 
         table_link.click()
-        self.page.wait_for_selector('#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_upPanel > div:nth-of-type(2) .col-md-3')
+        self.page.wait_for_selector(
+          '#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_upPanel > div:nth-of-type(2) .col-md-3')
 
         # Datos del Porvedor
         datos_del_provedor = {}
@@ -225,9 +237,11 @@ class CoreLib(object):
           "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_pnlClasesInscriptas tbody .tr-header")
         if clases_inscriptas_headers_raw:
           clases_inscriptas_headers_raw = clases_inscriptas_headers_raw.inner_text().split('\t')
-          clases_inscriptas_headers = list(map(lambda header: header.lower().replace(' ', '_'), clases_inscriptas_headers_raw))
+          clases_inscriptas_headers = list(
+            map(lambda header: header.lower().replace(' ', '_'), clases_inscriptas_headers_raw))
 
-          clases_inscriptas_raw = self.page.query_selector_all("#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_pnlClasesInscriptas tbody tr:not(.tr-header)")
+          clases_inscriptas_raw = self.page.query_selector_all(
+            "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_pnlClasesInscriptas tbody tr:not(.tr-header)")
           for clase_inscripta_raw in clases_inscriptas_raw:
             clases_inscriptas_info = clase_inscripta_raw.inner_text().replace('\n', '').split('\t')
             clases_inscriptas.append(dict(zip(clases_inscriptas_headers, clases_inscriptas_info)))
@@ -274,7 +288,8 @@ class CoreLib(object):
         self.page.go_back()
 
       next_providers = self.page.query_selector(
-        ".pagination-gv tr td a[href=\"javascript:__doPostBack('ctl00$CPH1$UCBuscarProveedor$gvResultados','Page${}')\"]".format(next_page))
+        ".pagination-gv tr td a[href=\"javascript:__doPostBack('ctl00$CPH1$UCBuscarProveedor$gvResultados','Page${}')\"]".format(
+          next_page))
       if next_providers:
         next_providers.click()
         BuiltIn().sleep('1500ms')
@@ -284,15 +299,64 @@ class CoreLib(object):
 
     write_results(json.dumps(table_data, ensure_ascii=False))
 
+  @keyword('Esperar até que elemento não esteja visivel')
+  def wait_for_element_hidden(self, selector: str):
+    self.page.wait_for_selector(selector, state='hidden')
+
+  @keyword('Esperar')
+  def wait_sleep(self, time: str):
+    BuiltIn().sleep(time)
+
+  @keyword('Pegar dados da tabela em Hacienda MX JSON passando o seletor do header')
+  def dump_table_with_header(self, header: str, data: str):
+    '''
+        Realiza o parse da tabela correspondete ao `selector` para JSON e escreve o resultado no arquivo XML de saída do Robot (tag `crawler-result`).
+
+        Parâmetros:
+        - `header`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+        - `data`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+
+        Exemplos:
+        | Pegar dados da tabela em JSON | .minha-tabela |
+        | Pegar dados da tabela em JSON | .minha-tabela |
+        '''
+    table_data: list[dict] = []
+    # BuiltIn().sleep('3000ms')
+    raw_header = self.page.query_selector(
+      header).inner_text().split('\n')
+    headers = list(filter(lambda x: x != str('\t'), raw_header))
+
+    raw_data = self.page.query_selector(data).inner_text().split('\n')
+    data_values = list(
+      filter(lambda x: (x != str('\t') and x != ''), raw_data))
+    next_page_btn = self.page.query_selector(
+      '#formTabla\:tabla_paginator_top > span.ui-paginator-next.ui-state-default.ui-corner-all:not(.ui-state-disabled)')
+    while next_page_btn:
+      next_page_btn.click()
+
+      next_page_btn = self.page.query_selector(
+        '#formTabla\:tabla_paginator_bottom > span.ui-paginator-next.ui-state-default.ui-corner-all:not(.ui-state-disabled)')
+      raw_data_loop = self.page.query_selector(
+        data).inner_text().split('\n')
+      data_values_loop = list(
+        filter(lambda x: (x != str('\t') and x != ''), raw_data_loop))
+      data_values.extend(data_values_loop)
+
+    while len(data_values) >= len(headers):
+      arr_data = data_values[:len(headers)]
+      data_values = data_values[len(headers):]
+      table_data.append(dict(zip(headers, arr_data)))
+    write_results(json.dumps(table_data, ensure_ascii=False))
+
   @keyword('Fechar navegador e parar playwright')
   def teardown(self):
     '''
-    Utilizado para fechar o navegador e parar o serviço do playwright. É recomendado
-    sempre utilizar essa palavra chave no `Teardown` das tarefas para que sempre seja
-    executada ao final da tarefa (em caso de sucesso ou falha), dessa forma não deixando
-    o serviço do playwright rodando mesmo após a tarefa terminar. Caso o serviço do playwright
-    continue executando mesmo após a terefa terminar pode ocasionar problemas nas próximas tarefas.
-    '''
+        Utilizado para fechar o navegador e parar o serviço do playwright. É recomendado
+        sempre utilizar essa palavra chave no `Teardown` das tarefas para que sempre seja
+        executada ao final da tarefa (em caso de sucesso ou falha), dessa forma não deixando
+        o serviço do playwright rodando mesmo após a tarefa terminar. Caso o serviço do playwright
+        continue executando mesmo após a terefa terminar pode ocasionar problemas nas próximas tarefas.
+        '''
     self.page.close()
     self.browser.close()
     self.playwright.stop()
