@@ -3,7 +3,7 @@ Library  ../core/robot-libs/CoreLib.py
 
 
 *** Tasks ***
-Buscar em Compras Publicas Ecuador
+Buscar em Compr.ar
     Abrir o navegador em                       https://comprar.gob.ar/PLIEGO/BuscarProveedorCiudadano.aspx
     Digitar texto em campo                     ${razon_social}  \#ctl00_CPH1_UCBuscarProveedor_txtRazonSocial
     Clicar em                                  \#ctl00_CPH1_UCBuscarProveedor_btnBusquedaAvanzada

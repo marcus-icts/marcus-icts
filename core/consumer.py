@@ -14,8 +14,8 @@ def on_message_callback(ch: BlockingChannel, method: Basic.Deliver, properties: 
   '''
 
   # Validações da mensagem e das propriedades
-  if properties.reply_to is None or properties.correlation_id is None:
-    raise InvalidMessagePayloadException("Missing 'reply_to' or 'correlation_id'")
+  if properties.reply_to is None:
+    raise InvalidMessagePayloadException("Missing 'reply_to'")
 
   try:
     request = json.loads(body.decode('UTF-8'))
@@ -25,13 +25,13 @@ def on_message_callback(ch: BlockingChannel, method: Basic.Deliver, properties: 
   if not 'subject' in request or not 'related_data' in request:
     raise InvalidMessageException("Missing 'subject' or 'related_data'")
 
-  request['result'] = exec_robot(request['subject'], request['related_data'], properties.correlation_id)
+  request['result'] = exec_robot(request['subject'], request['related_data'])
 
   ch.basic_ack(method.delivery_tag)
 
   # Envia a resposta para fila de resposta
-  ch.queue_declare(properties.reply_to)
-  ch.basic_publish('', properties.reply_to, json.dumps(request, ensure_ascii=False), BasicProperties(correlation_id=properties.correlation_id))
+  ch.queue_declare(properties.reply_to, durable=True)
+  ch.basic_publish('', properties.reply_to, json.dumps(request, ensure_ascii=False))
   get_logger().info(" [✓] Result published on '{}' queue".format(properties.reply_to))
 
 def callback_wrapper(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes):

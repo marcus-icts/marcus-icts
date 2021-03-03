@@ -409,7 +409,7 @@ class CoreLib(object):
         if(self.page.query_selector(domicilio)):
             domicilio_data = self.page.query_selector(domicilio).inner_text()
         else:
-            domicilio_data
+            domicilio_data = None
         if(self.page.query_selector(cmc)):
             cmc_data = self.page.query_selector(cmc).inner_text()
         else:
