@@ -1,4 +1,5 @@
-import json
+import json, re
+from functools import reduce
 
 import robot
 from robot.libraries.BuiltIn import BuiltIn
@@ -281,8 +282,8 @@ class CoreLib(object):
 
                     estado_documentacion_raw = self.page.query_selector_all(
                         "#ctl00_CPH1_UCVerCertificadoEstadoRegistralCiudadano_gvDocumentos tbody tr:not(.tr-header)")
-                    for estado_documentacion_raw in estado_documentacion_raw:
-                        estado_documentacion_info = estado_documentacion_raw.inner_text().replace('\n',
+                    for estado_documentacion_raw_item in estado_documentacion_raw:
+                        estado_documentacion_info = estado_documentacion_raw_item.inner_text().replace('\n',
                                                                                                   '').split('\t')
                         estado_documentacion.append(
                             dict(zip(estado_documentacion_legal_headers, estado_documentacion_info)))
@@ -373,67 +374,45 @@ class CoreLib(object):
         self.playwright.stop()
 
     @keyword('Pegar dados da página perfilProv')
-    def dump_page(self, name: str, phone: str, email: str, domicilio: str, cmc: str, clc: str, estado: str, condicion: str, contribuyente: str):
-        '''
-            Realiza o parse da página dos valores necessários.
+    def pegar_dados_perfilprov(self):
+        data = {}
+        self.wait_for_element('//*[@id="idPanelA2"]/div[2]/div/app-tile/a/div')
 
-            Parâmetros:
-            - `name`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
-            - `phone`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
-            - `email`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
-            - `domicilio`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
-            - `cmc`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
-            - `clc`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
-            - `estado`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
-            - `condicion`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
-            - `contribuyente`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
-            Exemplos:
-            | Pegar dados da página |
-            '''
-        table_data: list[dict] = []
-        header = ['nombre', 'teléfono', 'email', 'domocilio', 'cmc',
-                  'clc', 'estado', 'condición', 'tipo de contribuyente']
-        # header = []
-        if (self.page.query_selector(name)):
-            name_data = self.page.query_selector(name).inner_text()
-        else:
-            name_data = None
-        if (self.page.query_selector(phone)):
-            phone_data = self.page.query_selector(phone).inner_text()
-        else:
-            phone_data = None
-        if (self.page.query_selector(email)):
-            email_data = self.page.query_selector(email).inner_text()
-        else:
-            email_data = None
-        if(self.page.query_selector(domicilio)):
-            domicilio_data = self.page.query_selector(domicilio).inner_text()
-        else:
-            domicilio_data = None
-        if(self.page.query_selector(cmc)):
-            cmc_data = self.page.query_selector(cmc).inner_text()
-        else:
-            cmc_data = None
-        if(self.page.query_selector(clc)):
-            clc_data = self.page.query_selector(clc).inner_text()
-        else:
-            clc_data = None
-        if(self.page.query_selector(estado)):
-            estado_data = self.page.query_selector(estado).inner_text()
-        else:
-            estado_data = None
-        if(self.page.query_selector(condicion)):
-            condicion_data = self.page.query_selector(condicion).inner_text()
-        else:
-            condicion_data = None
-        if(self.page.query_selector(contribuyente)):
-            contribuyente_data = self.page.query_selector(
-                contribuyente).inner_text()
-        else:
-            contribuyente_data = None
+        # Tem contrato?
+        card = self.page.query_selector('//*[@id="idPanelA2"]/div[2]/div/app-tile/a/div')
+        no_contract = card.query_selector('span.tile__contract-no')
+        data['has_contract'] = True if no_contract is None else False
 
-        body = [name_data, phone_data, email_data, domicilio_data, cmc_data,
-                clc_data, estado_data, condicion_data, contribuyente_data]
+        card.click()
+        self.click_at('//html/body/app-root/div/div/app-prov-ficha/div/div/div[1]/div[1]/div/div[3]/span[1]')
 
-        table_data.append(dict(zip(header, body)))
-        write_results(json.dumps(table_data, ensure_ascii=False))
+        # Pega os dados cadastrais
+        profile_content = self.page.query_selector('div.profile-content')
+        profile_content_as_list = list(map(lambda x: re.sub(r"\(\*+\)", '', x), filter(lambda x: x != ':', profile_content.inner_text().split('\n'))))
+        data['registration'] = { profile_content_as_list[i]: profile_content_as_list[i + 1] for i in range(0, len(profile_content_as_list), 2) }
+        data['registration']['Nombre'] = self.page.query_selector('.supplier-card .header .page__title').inner_text()
+
+        # Pega os antecedentes
+        right_content_legend = list(map(lambda x: re.sub(r"\n", ' ', x.inner_text()), self.page.query_selector_all('.right-container .score-data .score-legend')))
+        right_content_value = list(map(lambda x: x.inner_text(), self.page.query_selector_all('.right-container .score-data .score-value')))
+        data['record'] = dict(zip(right_content_legend, right_content_value))
+
+        # Pegar dados societários
+        partners_content = self.page.query_selector_all('.data-container .row:nth-child(2) .col-12:first-child .left-spaced')
+
+        try:
+            partners_content = list(filter(lambda x: x.query_selector('.contract-title').inner_text() == 'Socios/Accionistas', partners_content))[0]
+            partners_content = map(lambda x: x.inner_text().split('\nTipo de Documento: '), partners_content.query_selector_all('.contract-details'))
+        except:
+            partners_content = []
+
+        def partners_reducer (acc: list, curr):
+            acc.append({
+                'nombre': curr[0],
+                'doc': curr[1]
+            })
+            return acc
+
+        data['partners'] = reduce(partners_reducer, partners_content, [])
+
+        write_results(json.dumps(data, ensure_ascii=False))
