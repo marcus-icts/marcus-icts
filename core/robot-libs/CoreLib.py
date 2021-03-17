@@ -1,4 +1,4 @@
-import json, re
+import json, re, base64
 from functools import reduce
 
 import robot
@@ -414,5 +414,10 @@ class CoreLib(object):
             return acc
 
         data['partners'] = reduce(partners_reducer, partners_content, [])
+
+        # Pegar a evidencia
+        evidence_bytes = self.page.screenshot(full_page=True)
+        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
+        data['evidence'] = 'data:image/png;base64,{}'.format(evidence_b64)
 
         write_results(json.dumps(data, ensure_ascii=False))
