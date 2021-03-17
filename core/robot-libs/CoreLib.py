@@ -387,10 +387,27 @@ class CoreLib(object):
         self.click_at('//html/body/app-root/div/div/app-prov-ficha/div/div/div[1]/div[1]/div/div[3]/span[1]')
 
         # Pega os dados cadastrais
+        data['registration'] = {
+            'Nombre': self.page.query_selector('.supplier-card .header .page__title').inner_text()
+        }
+
         profile_content = self.page.query_selector('div.profile-content')
-        profile_content_as_list = list(map(lambda x: re.sub(r"\(\*+\)", '', x), filter(lambda x: x != ':', profile_content.inner_text().split('\n'))))
-        data['registration'] = { profile_content_as_list[i]: profile_content_as_list[i + 1] for i in range(0, len(profile_content_as_list), 2) }
-        data['registration']['Nombre'] = self.page.query_selector('.supplier-card .header .page__title').inner_text()
+
+        infos = profile_content.query_selector_all('.info')
+        for info in infos:
+            key = re.sub(r"\(\*+\)", '', info.query_selector('.info-label').inner_text())
+            values = info.query_selector_all('.info-value')
+
+            if len(values) == 0:
+                email_values = info.query_selector_all('.emails-list a')
+                if len(email_values) == 0:
+                    data['registration'][key] = '-'
+                else:
+                    data['registration'][key] = list(map(lambda x: x.inner_text(), email_values))
+            elif len(values) == 1:
+                data['registration'][key] = values[0].inner_text()
+            else:
+                data['registration'][key] = list(map(lambda x: x.inner_text(), values))
 
         # Pega os antecedentes
         right_content_legend = list(map(lambda x: re.sub(r"\n", ' ', x.inner_text()), self.page.query_selector_all('.right-container .score-data .score-legend')))
