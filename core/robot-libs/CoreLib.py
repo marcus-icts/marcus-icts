@@ -375,8 +375,17 @@ class CoreLib(object):
 
     @keyword('Pegar dados da página perfilProv')
     def pegar_dados_perfilprov(self):
-        data = {}
-        self.wait_for_element('//*[@id="idPanelA2"]/div[2]/div/app-tile/a/div')
+        data = {
+            'found': True
+        }
+
+        try:
+            self.wait_for_element('//*[@id="idPanelA2"]/div[2]/div/app-tile/a/div')
+        except:
+            data['found'] = False
+            write_results(json.dumps(data, ensure_ascii=False))
+            return
+
 
         # Tem contrato?
         card = self.page.query_selector('//*[@id="idPanelA2"]/div[2]/div/app-tile/a/div')
