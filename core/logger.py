@@ -8,7 +8,7 @@ def setup_logger():
   logger = logging.getLogger('icts-crawler')
   logger.setLevel(logging.INFO)
 
-  fh = logging.FileHandler('{}logs/crawler.log'.format(env('APP_PATH')))
+  fh = logging.FileHandler('{}/logs/crawler.log'.format(env('APP_PATH')))
   fh.setLevel(env('LOGGER_LEVEL', 'ERROR'))
   fh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
 

@@ -8,3 +8,5 @@ logs/*
 
 robot/results/*
 !robot/results/.keep
+
+Pipfile*
