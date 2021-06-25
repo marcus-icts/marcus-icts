@@ -47,7 +47,7 @@ def callback_wrapper(ch: BlockingChannel, method: Basic.Deliver, properties: Bas
   except Exception as e:
     ch.basic_publish(
       '',
-      '{0}_Error'.format(env('RABBIT_QUEUE_PREFIX', 'icts-crawler')),
+      '{0}_InputError'.format(env('RABBIT_QUEUE_PREFIX', 'icts-crawler')),
       json.dumps({
         'properties': properties.__dict__,
         'body': '%r' % body,

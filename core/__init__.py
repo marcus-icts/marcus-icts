@@ -22,7 +22,7 @@ def _consume():
     )
   ))
   channel = conn.channel()
-  channel.queue_declare('{0}_Error'.format(queue_prefix), False, True, False, False)
+  channel.queue_declare('{0}_InputError'.format(queue_prefix), False, True, False, False)
   channel.queue_declare('{0}_Input'.format(queue_prefix), False, True, False, False)
   channel.basic_consume('{0}_Input'.format(queue_prefix), callback_wrapper)
   get_logger().info(' [*] Waiting for messages. To exit press CTRL+C')
