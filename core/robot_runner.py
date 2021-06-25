@@ -28,10 +28,10 @@ def exec_robot(subject: str, related_data: Optional[dict] = None):
   variables = [''] if related_data is None else list(map(lambda kv: '{0}:{1}'.format(kv, related_data[kv]), related_data))
 
   # Gera o nome do arquivo de output
-  output_file = '{}robot/results/{}.xml'.format(env('APP_PATH'), time.time())
+  output_file = '{}/robot/results/{}.xml'.format(env('APP_PATH'), time.time())
 
   logger.info('\tRobot task started...')
-  run('{}crawlers/{}.robot'.format(env('APP_PATH'), subject), output=output_file, log=None, report=None, console='quiet', variable=variables)
+  run('{}/crawlers/{}.robot'.format(env('APP_PATH'), subject), output=output_file, log=None, report=None, console='quiet', variable=variables)
   logger.info('\t... robot task finished')
   result = parse_result(output_file)
   result = json.loads(result) if result is not None else None
