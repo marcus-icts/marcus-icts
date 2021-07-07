@@ -98,16 +98,27 @@ class CoreLib(object):
         | Pegar dados da tabela em JSON | .minha-tabela |
         | Pegar dados da tabela em JSON | .minha-tabela | 2 | 4 |
         '''
-        table_data: list[dict] = []
+        table_data: dict = {'data':[]}
         raw_data = self.page.query_selector(selector).inner_text().split('\n')
         headers = raw_data[header_at - 1].split('\t')
 
         raw_data = raw_data[(data_begins_at - 1):]
         for str_data in raw_data:
             arr_data = str_data.split('\t')
-            table_data.append(dict(zip(headers, arr_data)))
+            table_data['data'].append(dict(zip(headers, arr_data)))
+
+        table_data['evidence'] = self.take_evidence()
+
 
         write_results(json.dumps(table_data, ensure_ascii=False))
+
+    @keyword('Printar tela')
+    def take_evidence(self):
+        evidence_bytes = self.page.screenshot(full_page=True)
+        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
+
+        return 'data:image/png;base64,{}'.format(evidence_b64)
+
 
     @keyword('Extrair resultados CompraSal')
     def extract_comprasal_data(self):
@@ -118,13 +129,14 @@ class CoreLib(object):
         Exemplos:
         | Extrair resultados CompraSal |
         """
-        table_data: list[dict] = []
+        table_data: dict = {"data": []}
         has_more_providers = True
-        selector = "#comprasal_1 table tbody tr td:first-child a"
+        selector = "#comprasal_1 table tbody tr"#td:first-child a"
         while has_more_providers:
             self.page.wait_for_selector(selector)
             table_lines = self.page.query_selector_all(selector)
-            for table_link in table_lines:
+            for line in table_lines:
+                table_link = line.query_selector('td:first-child a')
                 provider_details = {}
                 table_link.click()
 
@@ -161,8 +173,9 @@ class CoreLib(object):
                         has_more_services = False
 
                 self.page.click('a.ui-dialog-titlebar-close')
-                table_data.append({
+                table_data['data'].append({
                     'nombre': table_link.inner_text(),
+                    'comercial': line.query_selector('td:last-child a').inner_text(),
                     'detalles_del_provedor': provider_details,
                     'bienes_obras_servicos': provided_services
                 })
@@ -176,6 +189,7 @@ class CoreLib(object):
             else:
                 has_more_providers = False
 
+        table_data['evidence'] = self.take_evidence()
         write_results(json.dumps(table_data, ensure_ascii=False))
 
     @keyword('Extrair resultados ComprarArgentina')
