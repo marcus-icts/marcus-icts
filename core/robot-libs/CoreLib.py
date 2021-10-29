@@ -42,7 +42,7 @@ class CoreLib(object):
             headless=headless, slow_mo=slow_mo)
         self.context = self.browser.new_context()
         self.page = self.context.new_page()
-        self.page.goto(url)
+        self.page.goto(url, 180000)
         self.data = {}
 
     @keyword('Clicar em')
@@ -563,7 +563,7 @@ class CoreLib(object):
             console("tratando valor recebido")
             console("Armazenando valor tratado")
             self.data['valor_recebido'] = moneyValue
-            self.page.goto('https://www.xe.com/currencyconverter/convert/?Amount='+moneyValue+'&From=GTQ&To=USD')
+            self.page.goto('https://www.xe.com/currencyconverter/convert/?Amount='+moneyValue+'&From=GTQ&To=USD', 180000)
             # self.page.wait_for_selector('#__next > div:nth-child(2) > div.fluid-container__BaseFluidContainer-qoidzu-0.gJBOzk > section > div:nth-child(2) > div > main > form > div:nth-child(2) > div:nth-child(1) > p.result__BigRate-sc-1bsijpp-1.iGrAod')
             moneyTransformed = self.page.query_selector('#__next > div:nth-child(2) > div.fluid-container__BaseFluidContainer-qoidzu-0.gJBOzk > section > div:nth-child(2) > div > main > form > div:nth-child(2) > div:nth-child(1) > p.result__BigRate-sc-1bsijpp-1.iGrAod').inner_text()
             console(moneyValue)
@@ -591,7 +591,7 @@ class CoreLib(object):
                 self.data['inabilitados'] = []
                 if checkInabilitados:
                     ######### PEGANDO INABILITADOS ##############
-                    self.page.goto('https://www.guatecompras.gt/inhabilitaciones/consultaProveeInhabRes.aspx')
+                    self.page.goto('https://www.guatecompras.gt/inhabilitaciones/consultaProveeInhabRes.aspx', 180000)
                     provedoresInabilitadosKey = 0
                     while True:
                         provedor = None
