@@ -8,10 +8,9 @@ from robot.api.deco import keyword, library
 from robot.libraries.BuiltIn import BuiltIn
 from playwright.sync_api import sync_playwright
 from robot.api.logger import console
-
 from utils import write_results
-
-
+from dataUriCaptcha import dataUriCaptcha
+from core.env import env
 @library(scope='GLOBAL', version='0.0.1')
 class CoreLib(object):
     '''
@@ -41,8 +40,10 @@ class CoreLib(object):
         self.playwright = sync_playwright().start()
         self.browser = self.playwright.firefox.launch(
             headless=headless, slow_mo=slow_mo)
-        self.page = self.browser.new_page()
-        self.page.goto(url)
+        self.context = self.browser.new_context()
+        self.page = self.context.new_page()
+        self.page.goto(url, 180000)
+        self.data = {}
 
     @keyword('Clicar em')
     def click_at(self, selector: str):
@@ -386,6 +387,259 @@ class CoreLib(object):
         self.page.close()
         self.browser.close()
         self.playwright.stop()
+    @keyword('Resolver Captcha')
+    def resolve_captcha(self,retry:int = 0):
+        self.data = {
+            'found': True
+        }
+        self.wait_for_element('//*[@id="MasterGC_ContentBlockHolder_CaptchaValidacion_CaptchaImage"]')
+        card = self.page.query_selector('//*[@id="MasterGC_ContentBlockHolder_CaptchaValidacion_CaptchaImage"]')
+        console(len(self.context.pages))
+        result = card.screenshot()
+        solver = dataUriCaptcha()
+        solver.set_verbose(1)
+        # solver.set_key("27d819d5ee02a13d4152ab123f16cd6d")
+        solver.set_key(env('CAPTCHA_KEY'))
+        # solver.
+        captcha_text = solver.solve_and_return_solution(base64.encodebytes(result))
+
+        if captcha_text != 0:
+            print("captcha text "+captcha_text)
+            self.captcha = captcha_text
+            self.data['captcha'] = captcha_text
+            self.page.fill('//*[@id="MasterGC_ContentBlockHolder_CaptchaValidacion_CaptchaTextBox"]', captcha_text)
+            self.page.click('//*[@id="MasterGC_ContentBlockHolder_cmndNuevaBusquedaNombre"]')
+            try:
+                error = self.page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblError1"]')
+                checkError = error != None
+                if not checkError:
+                    self.wait_for_element('//*[@id="MasterGC_ContentBlockHolder_gvResultado"]')
+                    console('verificando se encontrou resultado')
+                    console('encontrou resultado')
+                    self.page.query_selector('//*[@id="MasterGC_ContentBlockHolder_gvResultado_ctl02_HyperLink1"]').click()
+                    self.wait_for_element('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
+                else:
+                    console('não encontrou resultado')
+                    self.data['found'] = False
+            except Exception as e:
+                console('Tentando novamente, deu erro de tempo ou captcha errado')
+                if retry < 3:
+                    self.resolve_captcha(retry+1)
+                else:
+                    console('Finalizando após 4 tentativas')
+                    self.data['found'] = False
+                    self.data['error'] = '4 Tentativas de resolver captcha e não conseguiu, pode ser por tempo ou texto errado'
+                    write_results(json.dumps(self.data, ensure_ascii=False))
+        else:
+            self.data['found'] = False
+            self.data['captchaError'] = solver.error_code
+            write_results(json.dumps(self.data, ensure_ascii=False))
+            print("task finished with error "+solver.error_code)
+    @keyword('Dados Cadastrais e societários latam')
+    def extract_cadastral_data_latam(self):
+        ####### DADOS CADASTRAIS ###################
+        if self.data['found'] == True:
+            self.wait_for_element('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
+            self.data['cui'] = self.page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblCUI"]').inner_text()
+            self.data['nombre'] = self.page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]').inner_text()
+            self.data['tipo_organizacion'] = self.page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblTipoOrganizacion"]').inner_text()
+            self.data['nit'] = self.page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNIT"]').inner_text()
+            if self.page.query_selector('#contenido > div:nth-child(4) > div.cuadroResumen > div > div:nth-child(6) > div.col-xs-12.col-sm-12.col-md-3.col-lg-3 > span').inner_text() == 'Nombre comercial 1:':
+                console('tem nome comercial')
+                self.data['nombre_comercial'] = self.page.query_selector('#contenido > div:nth-child(4) > div.cuadroResumen > div > div:nth-child(6) > div.col-xs-12.col-sm-12.col-md-9.col-lg-9 > div').inner_text()
+            else:
+                console('não tem nome comercial')
+                self.data['nombre_comercial'] = None
+            console(self.page.query_selector('//*[@id="DivDatosAdicionales-tab"]'))
+            datosAdicionales = self.page.query_selector('//*[@id="DivDatosAdicionales-tab"]')
+            datosAdicionalesCheck = datosAdicionales != None
+            if datosAdicionalesCheck:
+                console('tem dados adicionais')
+                self.data['fecha_de_constitucion'] = self.page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblFechaConstitucion"]').inner_text()
+                self.data['actividad_economica'] = self.page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblActividadEconomica"]').inner_text()
+            else:
+                console('não tem dados adicionais')
+                self.data['fecha_de_constitucion'] = None
+                self.data['actividad_economica'] = None
+            datosDomicilioComercial =  self.page.query_selector('//*[@id="DivDomicilioComercial-tab"]')
+            datosDomicilioComercialCheck = datosDomicilioComercial != None
+            if datosDomicilioComercialCheck:
+                console('tem dados domicilio comercial')
+                self.page.query_selector('//*[@id="DivDomicilioComercial-tab"]').click()
+                console(self.page.query_selector('#MasterGC_ContentBlockHolder_lblComPagina').inner_text())
+                if self.page.query_selector('#MasterGC_ContentBlockHolder_lblComPagina').inner_text():
+                    self.data['pagina_web'] = self.page.query_selector('#MasterGC_ContentBlockHolder_lblComPagina').inner_text()
+                else:
+                    self.data['pagina_web'] = None
+                if self.page.query_selector('#MasterGC_ContentBlockHolder_lblComCorreo').inner_text():
+                    self.data['correo_electronico'] = self.page.query_selector('#MasterGC_ContentBlockHolder_lblComCorreo').inner_text()
+                else:
+                    self.data['correo_electronico'] = None
+                if self.page.query_selector('#MasterGC_ContentBlockHolder_lblComDireccion').inner_text():
+                    self.data['endereco'] = self.page.query_selector('#MasterGC_ContentBlockHolder_lblComDireccion').inner_text()
+                else:
+                    self.data['endereco'] = None
+                if self.page.query_selector('#MasterGC_ContentBlockHolder_lblComTelefono').inner_text():
+                    self.data['telefone'] = self.page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblComTelefono"]').inner_text()
+                else:
+                    self.data['telefone'] = None
+            else:
+                console('não tem dados domicilio comercial')
+                self.data['pagina_web'] = None
+                self.data['correo_electronico'] = None
+                self.data['endereco'] = None
+                self.data['telefone'] = None
+            datosRepresentante = self.page.query_selector('#DivRepresentante-tab')
+            datosRepresentanteCheck = datosRepresentante != None
+            if datosRepresentanteCheck:
+                self.page.query_selector('#DivRepresentante-tab').click()
+            datoskey = 0
+            self.data['representantes'] = []
+            ####### PEGANDO REPRESENTANTES ##############
+            ####### DADOS SOCIETÁRIOS ###################
+            while True:
+                info = None
+                try:
+                    info = self.page.query_selector_all('#MasterGC_ContentBlockHolder_gvRepresentantesLegales > tbody > .FilaTablaDetalle')[datoskey]
+                except:
+                    break
+                datoskey += 1
+                datos = {}
+                datos['representante'] = info.query_selector('td:nth-child(1)').inner_text()
+                datos['proveedor'] = info.query_selector('td:nth-child(2)').inner_text()
+                datos['plazo'] = info.query_selector('td:nth-child(3)').inner_text()
+                values = info.query_selector('td:nth-child(4) > input')
+                subdatos = {}
+                if values:
+                    info.query_selector('td:nth-child(4) > input').click()
+                    self.page.wait_for_selector('.close[data-dismiss=modal]')
+                    subinfos = self.page.query_selector_all('#MasterGC_ContentBlockHolder_wuDetalleRepresentados_gdvDetalleRep > tbody > .FilaTablaDetalle')
+                    for subinfo in subinfos:
+                        key = subinfo.query_selector('td:nth-child(1)').inner_text()
+                        subdatos[key] = subinfo.query_selector('td:nth-child(2)').inner_text()
+                    self.page.query_selector('.close[data-dismiss=modal]').click()
+                datos['subrepresentes'] = subdatos
+                self.data['representantes'].append(datos)
+
+    @keyword('Tema Reputacional')
+    def extract_data_reputacional(self):
+    ######### PEGANDO INCONFORMIDADES ###########
+    ######### TEMA REPUTACIONAL #################
+        inconformidades = self.page.query_selector('#Inconformidades-tab')
+        inconformidadesCheck = inconformidades != None
+        counter = 0
+        # console('pegando a url')
+        # console(self.page.url)
+        self.data['url'] = self.page.url
+        if inconformidadesCheck:
+            inconformidades.click()
+            inconformidadesInfos = self.page.query_selector_all('#MasterGC_ContentBlockHolder_gvInconformidades > tbody > tr.FilaTablaDetalle')
+            for inconformidade in inconformidadesInfos:
+                if inconformidade.query_selector('span.TablaItemAzulSm').inner_text() == 'Aceptada':
+                    counter += 1
+        self.data['inconformidades_aceitas'] = counter
+        # Pegar a evidencia
+        evidence_bytes = self.page.screenshot(full_page=True)
+        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
+        self.data['evidence'] = 'data:image/png;base64,{}'.format(evidence_b64)
+        write_results(json.dumps(self.data, ensure_ascii=False))
+    @keyword('Tema Financeiro')
+    def extract_latam_financial_data(self):
+        ######### PEGANDO VALOR MONETÁRIO ###########
+        ######### TEMA FINANCEIRO &&#################
+        # console('pegando a url')
+        # console(self.page.url)
+        self.data['url'] = self.page.url
+        # Pegar a evidencia
+        evidence_bytes = self.page.screenshot(full_page=True)
+        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
+        self.data['evidence'] = 'data:image/png;base64,{}'.format(evidence_b64)
+        if self.page.query_selector('#NOGS-tab'):
+            self.page.query_selector('#NOGS-tab').click()
+        money = self.page.query_selector('#MasterGC_ContentBlockHolder_dbResumen > tbody > tr.FooterTablaDetalle')
+        if money:
+            moneyValue = money.query_selector('td:nth-child(7)').inner_text()
+            console("Pegando o valor já recebido")
+            console("tratando valor recebido")
+            console("Armazenando valor tratado")
+            self.data['valor_recebido'] = moneyValue
+            self.page.goto('https://www.xe.com/currencyconverter/convert/?Amount='+moneyValue+'&From=GTQ&To=USD', 180000)
+            # self.page.wait_for_selector('#__next > div:nth-child(2) > div.fluid-container__BaseFluidContainer-qoidzu-0.gJBOzk > section > div:nth-child(2) > div > main > form > div:nth-child(2) > div:nth-child(1) > p.result__BigRate-sc-1bsijpp-1.iGrAod')
+            moneyTransformed = self.page.query_selector('#__next > div:nth-child(2) > div.fluid-container__BaseFluidContainer-qoidzu-0.gJBOzk > section > div:nth-child(2) > div > main > form > div:nth-child(2) > div:nth-child(1) > p.result__BigRate-sc-1bsijpp-1.iGrAod').inner_text()
+            console(moneyValue)
+            console(moneyTransformed)
+            console("Pegando valor em dolar")
+            self.data['valor_usd'] = moneyTransformed
+            console(self.data)
+        else:
+            console("Não pega o valor já recebido pois não contém")
+            self.data['valor_recebido'] = None
+        write_results(json.dumps(self.data, ensure_ascii=False))
+    @keyword('Tema Corrupcao')
+    def extract_latam_corrupcao_data(self):
+        ###### VERIFICANDO SE TEM INABILITADOS #####
+        ######### PEGANDO INABILITADOS ##############
+        ######### TEMA CORRUPCAO ####################
+        inabilitados = self.page.query_selector('#Inhabilitaciones-tab')
+        checkInabilitadosTeste = inabilitados != None
+        checkInabilitados= False
+        if checkInabilitadosTeste:
+            console('verificando se tem esse texto')
+            if inabilitados.inner_text() == 'Inhabilitaciones':
+                checkInabilitados = True
+                inabilitados.click()
+                self.data['inabilitados'] = []
+                if checkInabilitados:
+                    ######### PEGANDO INABILITADOS ##############
+                    self.page.goto('https://www.guatecompras.gt/inhabilitaciones/consultaProveeInhabRes.aspx', 180000)
+                    provedoresInabilitadosKey = 0
+                    while True:
+                        provedor = None
+                        try:
+                            provedor = self.page.query_selector_all('#MasterGC_ContentBlockHolder_dbResumen > tbody > tr.FilaTablaDetalle')[provedoresInabilitadosKey]
+                        except:
+                            break
+                        checkProvedor = str(provedor.query_selector("td:nth-child(3) > a").inner_text()) != '0'
+                        if checkProvedor:
+                            provedor.query_selector("td:nth-child(3) > a").click()
+                            provedoresKey = 0
+                            while True:
+                                provedorInfo = None
+                                try:
+                                    provedorInfo = self.page.query_selector_all('#MasterGC_ContentBlockHolder_dgResultado > tbody > tr.FilaTablaDetalle')[provedoresKey]
+                                except:
+                                    break
+                                provedorInfoCheck = provedorInfo.query_selector('td:nth-child(1)').inner_text() == self.data['nombre']
+                                if provedorInfoCheck:
+                                    provedorInfo.query_selector('td:nth-child(2) > a').click()
+                                    evidenciaKey = 0
+                                    while True:
+                                        evidenciaInfo = None
+                                        try:
+                                            evidenciaInfo = self.page.query_selector_all('#MasterGC_ContentBlockHolder_dgResultado > tbody > tr.FilaTablaDetalle')[evidenciaKey]
+                                        except:
+                                            break
+                                        evidenciaInfo.query_selector('td:nth-child(4) > a').click()
+                                        dadosInabilitados = {}
+                                        self.page.wait_for_selector('#MasterGC_ContentBlockHolder_lblMotivo')
+                                        dadosInabilitados['motivo'] = self.page.query_selector('#MasterGC_ContentBlockHolder_lblMotivo').inner_text()
+                                        dadosInabilitados['o_que_provocou'] = self.page.query_selector('#MasterGC_ContentBlockHolder_lblHecho').inner_text()
+                                        dadosInabilitados['duracao'] =self.page.query_selector('#MasterGC_ContentBlockHolder_lblDuracion').inner_text()
+                                        dadosInabilitados['inicio'] = self.page.query_selector('#MasterGC_ContentBlockHolder_lblFechaCreacion').inner_text()
+                                        dadosInabilitados['termino'] = self.page.query_selector('#MasterGC_ContentBlockHolder_lblFechaVencimiento').inner_text()
+                                        dadosInabilitados['status'] = self.page.query_selector('#MasterGC_ContentBlockHolder_lblEstatus').inner_text()
+                                        self.data['inabilitados'].append(dadosInabilitados)
+                                        evidenciaKey = evidenciaKey + 1
+                                        self.page.go_back()
+                                    self.page.go_back()
+                                else:
+                                    console('indo para o próximo')
+                                provedoresKey = provedoresKey + 1
+                            self.page.go_back()
+                        else:
+                            console("passando para o próximo")
+                        provedoresInabilitadosKey = provedoresInabilitadosKey + 1
+        write_results(json.dumps(self.data, ensure_ascii=False))
 
     @keyword('Pegar dados da página perfilProv')
     def pegar_dados_perfilprov(self):
