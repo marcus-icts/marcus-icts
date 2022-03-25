@@ -11,6 +11,7 @@ from robot.api.logger import console
 from utils import write_results
 from dataUriCaptcha import dataUriCaptcha
 from core.env import env
+import re
 @library(scope='GLOBAL', version='0.0.1')
 class CoreLib(object):
     '''
@@ -42,7 +43,7 @@ class CoreLib(object):
             headless=headless, slow_mo=slow_mo)
         self.context = self.browser.new_context()
         self.page = self.context.new_page()
-        self.page.goto(url, 180000)
+        self.page.goto(url, timeout=180000)
         self.data = {}
 
     @keyword('Clicar em')
@@ -715,3 +716,197 @@ class CoreLib(object):
         data['evidence'] = 'data:image/png;base64,{}'.format(evidence_b64)
 
         write_results(json.dumps(data, ensure_ascii=False))
+    @keyword('Resolver QsaCaptcha')
+    def resolver_qsacaptcha(self, cnpj: str):
+        console('Resolvendo QsaCaptcha')
+        self.data = {
+            'found': True
+        }
+        key = 1
+        retry = 0
+        self.wait_for_element('#captchaSonoro')
+        self.page.query_selector('#captchaSonoro').click()
+        self.wait_for_element('#imgCaptcha')
+        card = self.page.query_selector('#imgCaptcha')
+        console(len(self.context.pages))
+        result = card.screenshot()
+        solver = dataUriCaptcha()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        captcha_text = solver.solve_and_return_solution(base64.encodebytes(result))
+
+        if captcha_text != 0:
+            console("captcha text "+captcha_text)
+            self.captcha = captcha_text
+            self.data['captcha'] = captcha_text
+            self.page.fill('#txtTexto_captcha_serpro_gov_br', captcha_text)
+            self.page.query_selector('#frmConsulta > div:nth-child(4) > div > button.btn.btn-primary').click()
+            dadosCadastrais = {}
+            qsaData = {}
+            try:
+                console('tentando pegar o resultado')
+                self.page.query_selector('//*[@id="cnpj"]').click()
+                self.page.fill('//*[@id="cnpj"]',re.sub('/\d/','',cnpj))
+                self.page.click('//*[@id="frmConsulta"]/div[3]/div/button[1]')
+                dados = {}
+                BuiltIn().sleep('3')
+                paginas = self.page.query_selector('//*[@id="principal"]/table[2]/tbody/tr/td[2]/p/font/b').inner_text()
+                numeroDePaginas = paginas.split('/')
+                console('Número de páginas: ' + numeroDePaginas[1])
+                qtdPaginaTotal = int(numeroDePaginas[1])
+                paginaAtual = 1
+                registro = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[2]/tbody/tr/td[1]/font[2]/b[1]').inner_text()
+                dadosCadastrais['cnpj'] = registro
+                console('Registro: ' + registro)
+                dataAbertura = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[2]/tbody/tr/td[3]/font[2]/b').inner_text()
+                dadosCadastrais['dataAbertura'] = dataAbertura
+                console('Data da Abertura ' + dataAbertura)
+                razaoSocial = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[3]/tbody/tr/td/font[2]/b').inner_text()
+                dadosCadastrais['razaoSocial'] = razaoSocial
+                console('Razão social ' + razaoSocial)
+                nomeFantasia = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[4]/tbody/tr/td[1]/font[2]/b').inner_text()
+                dadosCadastrais['nomeFantasia'] = nomeFantasia
+                console('Nome Fantasia ' + nomeFantasia)
+                porte = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[4]/tbody/tr/td[3]/font[2]/b').inner_text()
+                dadosCadastrais['porte'] = porte
+                console('Porte ' + porte)
+                cnaePrincipal = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[5]/tbody/tr/td/font[2]/b').inner_text()
+                dadosCadastrais['cnaePrincipal'] = cnaePrincipal
+                console('Cnae Principal ' + cnaePrincipal)
+                ##VERIFICANDO SE TEM CNAE SECUNDARIO##
+                cnaeSecundario = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[6]/tbody/tr/td/font[2]/b')
+                console('verificando se tem esse texto')
+                if cnaeSecundario.inner_text() != 'Não informada':
+                    console('Tem cnae secundário')
+                    infos = self.page.query_selector_all('#principal > table:nth-child(1) > tbody > tr > td > table:nth-child(11) > tbody > tr > td > font')
+                    for info in infos:
+                        if info.inner_text() != 'CÓDIGO E DESCRIÇÃO DAS ATIVIDADES ECONÔMICAS SECUNDÁRIAS':
+                            console(info.inner_text())
+                            dados[key] = info.inner_text()
+                            key += 1
+                        else :
+                            console('Título de cnae secundario encontrado')
+                            console(info.inner_text())
+                else :
+                    console('Não tem cnae secundario')
+                    dadosCadastrais['cnaeSecundario'] = {}
+                naturezaJuridica = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[7]/tbody/tr/td/font[2]/b').inner_text()
+                dadosCadastrais['naturezaJuridica'] = naturezaJuridica
+                console('Natureza Juridica ' + naturezaJuridica)
+                logradouro = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[8]/tbody/tr/td[1]/font[2]/b').inner_text()
+                dadosCadastrais['logradouro'] = logradouro
+                console('Logradouro ' + logradouro)
+                logradouroNumero = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[8]/tbody/tr/td[3]/font[2]/b').inner_text()
+                dadosCadastrais['logradouroNumero'] = logradouroNumero
+                console('Logradouro Número ' + logradouroNumero)
+                logradouroComplemento = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[8]/tbody/tr/td[5]/font[2]/b').inner_text()
+                dadosCadastrais['logradouroComplemento'] = logradouroComplemento
+                console('Logradouro Complemento ' + logradouroComplemento)
+                cep = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[9]/tbody/tr/td[1]/font[2]/b').inner_text()
+                dadosCadastrais['cep'] = cep
+                console('CEP ' + cep)
+                bairro = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[9]/tbody/tr/td[3]/font[2]/b').inner_text()
+                dadosCadastrais['bairro'] = bairro
+                console('Bairro ' + bairro)
+                municipio = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[9]/tbody/tr/td[5]/font[2]/b').inner_text()
+                dadosCadastrais['municipio'] = municipio
+                console('Município ' + municipio)
+                uf = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[9]/tbody/tr/td[7]/font[2]/b').inner_text()
+                dadosCadastrais['uf'] = uf
+                console('UF ' + uf)
+                email = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[10]/tbody/tr/td[1]/font[2]/b').inner_text()
+                dadosCadastrais['email'] = email
+                console('E-mail ' + email)
+                telefone = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[10]/tbody/tr/td[3]/font[2]/b').inner_text()
+                dadosCadastrais['telefone'] = telefone
+                console('Telefone ' + telefone)
+                situacaoCadastral = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[12]/tbody/tr/td[1]/font[2]/b').inner_text()
+                dadosCadastrais['situacaoCadastral'] = situacaoCadastral
+                console('Situação Cadastral ' + situacaoCadastral)
+                dataSituacaoCadastral = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[12]/tbody/tr/td[3]/font[2]/b').inner_text()
+                dadosCadastrais['dataSituacaoCadastral'] = dataSituacaoCadastral
+                console('Data Situação Cadastral ' + dataSituacaoCadastral)
+                motivoSituacaoCadastral = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[13]/tbody/tr/td/font[2]/b').inner_text()
+                if motivoSituacaoCadastral == '':
+                    dadosCadastrais['motivoSituacaoCadastral'] = 'Não informado'
+                else:
+                    dadosCadastrais['motivoSituacaoCadastral'] = motivoSituacaoCadastral
+                console('Motivo Situação Cadastral ' + motivoSituacaoCadastral)
+                situacaoEspecial = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[14]/tbody/tr/td[1]/font[2]/b').inner_text()
+                dadosCadastrais['situacaoEspecial'] = situacaoEspecial
+                console('Situacao Especial ' + situacaoEspecial)
+                dataSituacaoEspecial = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[14]/tbody/tr/td[3]/font[2]/b').inner_text()
+                dadosCadastrais['dataSituacaoEspecial'] = dataSituacaoEspecial
+                console('Data Situacao Especial ' + dataSituacaoEspecial)
+
+                #### VERIFICA SE TEM MAIS DE UMA PÁGINA ####
+                if paginaAtual != qtdPaginaTotal :
+                    index = 1
+                    while (paginaAtual < qtdPaginaTotal):
+                        paginaAtual += 1
+                        tabelaUtilizada = paginaAtual+index
+                        console('Número da tabela a ser utilizada' + str(tabelaUtilizada))
+                        caminho= '//*[@id="principal"]/table['+str(tabelaUtilizada)+']/tbody/tr/td/table[4]/tbody/tr/td/font'
+                        console(caminho)
+                        tabelaInfos = self.page.query_selector_all(caminho)
+                        for tabelaInfo in tabelaInfos:
+                            if tabelaInfo.inner_text() != 'CÓDIGO E DESCRIÇÃO DAS ATIVIDADES ECONÔMICAS SECUNDÁRIAS':
+                                console(tabelaInfo.inner_text())
+                                dados[key] = tabelaInfo.inner_text()
+                                key += 1
+                            else :
+                                console('Título de cnae secundario encontrado')
+                                console(tabelaInfo.inner_text())
+                        index += 1
+                else :
+                    console('Não tem páginas adicionais')
+                dadosCadastrais['cnaeSecundario'] = dados
+                self.data['dadosCadastrais'] = dadosCadastrais
+                self.data['dadosCadastraisEvidencia'] = self.take_evidence()
+                validateQsa = self.page.query_selector('.btn-primary')
+                if validateQsa :
+                    self.page.query_selector('//*[@id="app"]/div/div/div/div/div[3]/div/div/div/button[1]').click()
+                    BuiltIn().sleep('3')
+                    capitalSocial = self.page.query_selector('//*[@id="capital"]/div[3]/div[2]').inner_text()
+                    qsaData['capitalSocial'] = capitalSocial
+                    console('Capital Social ' + capitalSocial)
+                    qsaInfos = self.page.query_selector_all('#principal > div > div > div')
+                    socios = {}
+                    sociosKey = 1;
+                    for qsa in qsaInfos:
+                        linha = {}
+                        queryText = qsa.query_selector('.col-md-12 > .alert > div:nth-child(1) > .col-md-9')
+                        if queryText != None :
+                            linha['socio'] = qsa.query_selector('.col-md-12 > .alert > div:nth-child(1) > .col-md-9').inner_text()
+                            linha['cargo'] = qsa.query_selector('.col-md-12 > .alert > div:nth-child(2) > .col-md-5').inner_text()
+                            socios[sociosKey] = linha
+                            sociosKey += 1
+                        else :
+                            console('não tem informação desse sócio nessa div')
+                    qsaData['socios'] = socios
+                    self.data['qsa'] = qsaData
+                    self.data['qsaEvidencia'] = self.take_evidence()
+                else :
+                    self.data['qsaEvidencia'] = self.take_evidence()
+                    self.data['qsa'] = {}
+                write_results(json.dumps(self.data, ensure_ascii=False))
+            except Exception as e:
+                console('Tentando novamente, deu erro de tempo ou captcha errado')
+                if retry < 3:
+                    self.resolver_qsacaptcha(retry+1)
+                else:
+                    console('Finalizando após 4 tentativas')
+                    self.data['found'] = False
+                    self.data['error'] = '4 Tentativas de resolver captcha e não conseguiu, pode ser por tempo ou texto errado'
+                    write_results(json.dumps(self.data, ensure_ascii=False))
+        else:
+            self.data['found'] = False
+            self.data['captchaError'] = solver.error_code
+            write_results(json.dumps(self.data, ensure_ascii=False))
+            print("task finished with error "+solver.error_code)
+
+        def check_is_odd(number):
+            num = int(number)
+            if (num % 2) == 0:
+                return False
+            return True

@@ -19,7 +19,7 @@ Caso queira rodar o crawler diretamente - para testes e afins - basta executar o
 ```sh
 (venv) $ python main.py run --subject compras_publicas_ecuador --related-data '{"razao_social": "lexim"}'
 
-(venv) $ python main.py run -s compras_publicas_ecuador -d '{"razao_social": "lexim"}'
+(venv) $ python main.py run -s compras_publicas_equador -d '{"razao_social": "lexim"}'
 ```
 Onde *subject* é o nome do script do Robot (sem a exntesão .robot) e *related-data* são os dados necessários para realizar a busca.
 
