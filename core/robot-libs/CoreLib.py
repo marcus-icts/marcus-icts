@@ -11,6 +11,7 @@ from robot.api.logger import console
 from utils import write_results
 from dataUriCaptcha import dataUriCaptcha
 from core.env import env
+import re
 @library(scope='GLOBAL', version='0.0.1')
 class CoreLib(object):
     '''
@@ -745,7 +746,7 @@ class CoreLib(object):
             try:
                 console('tentando pegar o resultado')
                 self.page.query_selector('//*[@id="cnpj"]').click()
-                self.page.fill('//*[@id="cnpj"]',cnpj)
+                self.page.fill('//*[@id="cnpj"]',re.sub('/\d/','',cnpj))
                 self.page.click('//*[@id="frmConsulta"]/div[3]/div/button[1]')
                 dados = {}
                 BuiltIn().sleep('3')
@@ -754,6 +755,9 @@ class CoreLib(object):
                 console('Número de páginas: ' + numeroDePaginas[1])
                 qtdPaginaTotal = int(numeroDePaginas[1])
                 paginaAtual = 1
+                registro = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[2]/tbody/tr/td[1]/font[2]/b[1]').inner_text()
+                dadosCadastrais['cnpj'] = registro
+                console('Registro: ' + registro)
                 dataAbertura = self.page.query_selector('//*[@id="principal"]/table[1]/tbody/tr/td/table[2]/tbody/tr/td[3]/font[2]/b').inner_text()
                 dadosCadastrais['dataAbertura'] = dataAbertura
                 console('Data da Abertura ' + dataAbertura)
@@ -857,33 +861,39 @@ class CoreLib(object):
                 else :
                     console('Não tem páginas adicionais')
                 dadosCadastrais['cnaeSecundario'] = dados
-                dadosCadastrais['dadosEvidencia'] = self.take_evidence()
                 self.data['dadosCadastrais'] = dadosCadastrais
-                self.page.query_selector('//*[@id="app"]/div/div/div/div/div[3]/div/div/div/button[1]').click()
-                capitalSocial = self.page.query_selector('//*[@id="capital"]/div[3]/div[2]').inner_text()
-                qsaData['capitalSocial'] = capitalSocial
-                console('Capital Social ' + capitalSocial)
-                qsaInfos = self.page.query_selector_all('#principal > div > div > div')
-                socios = {}
-                sociosKey = 1;
-                for qsa in qsaInfos:
-                    linha = {}
-                    queryText = qsa.query_selector('.col-md-12 > .alert > div:nth-child(1) > .col-md-9')
-                    if queryText != None :
-                        linha['socio'] = qsa.query_selector('.col-md-12 > .alert > div:nth-child(1) > .col-md-9').inner_text()
-                        linha['cargo'] = qsa.query_selector('.col-md-12 > .alert > div:nth-child(2) > .col-md-5').inner_text()
-                        socios[sociosKey] = linha
-                        sociosKey += 1
-                    else :
-                        console('não tem informação desse sócio nessa div')
-                qsaData['socios'] = socios
-                qsaData['qsaEvidencia'] = self.take_evidence()
-                self.data['qsa'] = qsaData
+                self.data['dadosCadastraisEvidencia'] = self.take_evidence()
+                validateQsa = self.page.query_selector('.btn-primary')
+                if validateQsa :
+                    self.page.query_selector('//*[@id="app"]/div/div/div/div/div[3]/div/div/div/button[1]').click()
+                    BuiltIn().sleep('3')
+                    capitalSocial = self.page.query_selector('//*[@id="capital"]/div[3]/div[2]').inner_text()
+                    qsaData['capitalSocial'] = capitalSocial
+                    console('Capital Social ' + capitalSocial)
+                    qsaInfos = self.page.query_selector_all('#principal > div > div > div')
+                    socios = {}
+                    sociosKey = 1;
+                    for qsa in qsaInfos:
+                        linha = {}
+                        queryText = qsa.query_selector('.col-md-12 > .alert > div:nth-child(1) > .col-md-9')
+                        if queryText != None :
+                            linha['socio'] = qsa.query_selector('.col-md-12 > .alert > div:nth-child(1) > .col-md-9').inner_text()
+                            linha['cargo'] = qsa.query_selector('.col-md-12 > .alert > div:nth-child(2) > .col-md-5').inner_text()
+                            socios[sociosKey] = linha
+                            sociosKey += 1
+                        else :
+                            console('não tem informação desse sócio nessa div')
+                    qsaData['socios'] = socios
+                    self.data['qsa'] = qsaData
+                    self.data['qsaEvidencia'] = self.take_evidence()
+                else :
+                    self.data['qsaEvidencia'] = self.take_evidence()
+                    self.data['qsa'] = {}
                 write_results(json.dumps(self.data, ensure_ascii=False))
             except Exception as e:
                 console('Tentando novamente, deu erro de tempo ou captcha errado')
                 if retry < 3:
-                    self.resolver_hcaptcha(retry+1)
+                    self.resolver_qsacaptcha(retry+1)
                 else:
                     console('Finalizando após 4 tentativas')
                     self.data['found'] = False
