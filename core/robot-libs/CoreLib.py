@@ -46,6 +46,29 @@ class CoreLib(object):
         self.page.goto(url, timeout=180000)
         self.data = {}
 
+    @keyword('Abrir o navegador em')
+    def open_browser(self, url: str, headless: bool = True, slow_mo: float = None, navegador: str = 'firefox'):
+        '''
+        Inicializa o serviço do playwright, executa o navegador (firefox) e abre uma página na URL especificada.
+
+        Parâmetros:
+          - `url`: endereço o qual o navegador deverá acessar
+          - `headless`: boleando para configurar se o navegador irá executar em modo headless ou headful
+          - `slow_mo`: tempo (em milisegundos) em que o `Playwright` deverá esperar entre suas ações - útil para debug
+
+        Exemplos:
+        | Abrir o navegador em | www.google.com |
+        | Abrir o navegador em | www.google.com | False |
+        | Abrir o navegador em | www.google.com | False | 3000 |
+        '''
+        self.playwright = sync_playwright().start()
+        self.browser = self.playwright[navegador].launch(
+            headless=headless, slow_mo=slow_mo)
+        self.context = self.browser.new_context()
+        self.page = self.context.new_page()
+        self.page.goto(url, timeout=180000)
+        self.data = {}
+
     @keyword('Clicar em')
     def click_at(self, selector: str):
         '''
@@ -910,3 +933,61 @@ class CoreLib(object):
             if (num % 2) == 0:
                 return False
             return True
+    @keyword('Resolver captcha imagem FGTS')
+    def resolver_captcha_imagem(self,retry: int = 0):
+        console('Resolvendo captcha Imagem')
+        self.data = {
+            'found': True
+        }
+        card = self.page.query_selector('#captchaImg_N2')
+        result = card.screenshot()
+        solver = dataUriCaptcha()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        captcha_text = solver.solve_and_return_solution(base64.encodebytes(result))
+        console(captcha_text)
+        if captcha_text != 0:
+            console("captcha text "+captcha_text)
+            self.captcha = captcha_text
+            self.data['captcha'] = captcha_text
+            self.page.fill('#mainForm\:txtCaptcha', captcha_text)
+            self.page.query_selector('//*[@id="mainForm:btnConsultar"]').click()
+            try:
+                self.page.query_selector('//*[@id="mainForm"]/fieldset[1]/legend/span/h3').inner_text()
+            except Exception as e:
+                console('Tentando novamente, deu erro de tempo ou captcha errado')
+                if retry < 3:
+                    self.resolver_captcha_imagem(retry+1)
+                else:
+                    console('Finalizando após 4 tentativas')
+                    self.data['found'] = False
+                    self.data['error'] = '4 Tentativas de resolver captcha e não conseguiu, pode ser por tempo ou texto errado'
+                    write_results(json.dumps(self.data, ensure_ascii=False))
+        else:
+            self.data['found'] = False
+            self.data['captchaError'] = solver.error_code
+            write_results(json.dumps(self.data, ensure_ascii=False))
+            print("task finished with error "+solver.error_code)
+    @keyword('Capturar Texto FGTS')
+    def capturar_texto(self):
+        regular = self.page.query_selector('//*[@id="mainForm"]/div[1]/div/span')
+        check_regular = regular != None
+        texto = ''
+        if check_regular :
+            texto = self.page.query_selector('//*[@id="mainForm"]/div[1]/div/span').inner_text()
+            self.page.query_selector('//*[@id="mainForm:j_id52"]').click()
+            self.page.wait_for_selector('#mainForm > fieldset:nth-child(4) > div > p')
+            declaracao = self.page.query_selector('#mainForm > fieldset:nth-child(4) > div > p').inner_text()
+            validade = self.page.query_selector('//*[@id="mainForm"]/fieldset[4]/div/p').inner_text()
+            certificado = self.page.query_selector('#mainForm > fieldset:nth-child(5) > div > p > span').inner_text()
+            data_informacao = self.page.query_selector('#mainForm > div:nth-child(6) > p > span:nth-child(2)').inner_text()
+            self.data['declaracao'] = declaracao
+            self.data['validade'] = validade
+            self.data['certificado'] = certificado
+            self.data['data_informacao'] = data_informacao
+            self.data['regular'] = True
+        else :
+            texto = self.page.query_selector('//*[@id="mainForm"]/div[2]/div/span').inner_text()
+            self.data['regular'] = False
+        self.data['regularidade'] = texto
+        write_results(json.dumps(self.data, ensure_ascii=False))
