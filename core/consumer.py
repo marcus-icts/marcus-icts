@@ -2,6 +2,7 @@ import json
 
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
+from datetime import date
 
 from .logger import get_logger
 from .env import env
@@ -45,15 +46,14 @@ def callback_wrapper(ch: BlockingChannel, method: Basic.Deliver, properties: Bas
   try:
     on_message_callback(ch, method, properties, body)
   except Exception as e:
-    ch.basic_publish(
-      '',
-      '{0}_InputError'.format(env('RABBIT_QUEUE_PREFIX', 'icts-crawler')),
-      json.dumps({
-        'properties': properties.__dict__,
-        'body': '%r' % body,
-        'err_repr': repr(e),
-        'err_str': str(e)
-      }, ensure_ascii=False)
-    )
+
+    erro = {
+        'date': date.today().isoformat(),
+        'message' : str(e),
+        # 'trace' : e.__traceback__
+    }
+    request = json.loads(body.decode('UTF-8'))
+    request['error'] = erro
+    ch.basic_publish('', properties.reply_to, json.dumps(request, ensure_ascii=False))
     ch.basic_ack(method.delivery_tag)
     logger.error(" [x] Unexpected error while processing message: %s. Message: '%r'. The message was forwarded to the error queue." % (repr(e), body))
