@@ -447,6 +447,7 @@ class CoreLib(object):
                     self.data['found'] = False
             except Exception as e:
                 console('Tentando novamente, deu erro de tempo ou captcha errado')
+                console(str(e))
                 if retry < 3:
                     self.resolve_captcha(retry+1)
                 else:
@@ -915,6 +916,7 @@ class CoreLib(object):
                 write_results(json.dumps(self.data, ensure_ascii=False))
             except Exception as e:
                 console('Tentando novamente, deu erro de tempo ou captcha errado')
+                console(str(e))
                 if retry < 3:
                     self.resolver_qsacaptcha(retry+1)
                 else:
@@ -950,12 +952,17 @@ class CoreLib(object):
             console("captcha text "+captcha_text)
             self.captcha = captcha_text
             self.data['captcha'] = captcha_text
+            # if retry == 0 :
+            #     self.page.fill('#mainForm\:txtCaptcha', 'lalala')
+            # else :
             self.page.fill('#mainForm\:txtCaptcha', captcha_text)
+
             self.page.query_selector('//*[@id="mainForm:btnConsultar"]').click()
             try:
                 self.page.query_selector('//*[@id="mainForm"]/fieldset[1]/legend/span/h3').inner_text()
             except Exception as e:
                 console('Tentando novamente, deu erro de tempo ou captcha errado')
+                console(str(e))
                 if retry < 3:
                     self.resolver_captcha_imagem(retry+1)
                 else:
