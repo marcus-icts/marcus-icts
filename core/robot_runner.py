@@ -15,6 +15,8 @@ def parse_result(file):
   '''
   tree = parse_xml(file)
   status = tree.find('./suite/test[1]/status')
+  if status is None:
+    return None
   if status.attrib['status'] == 'FAIL':
     raise TaskFailedException(status.text)
 
