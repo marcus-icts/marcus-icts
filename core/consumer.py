@@ -3,7 +3,7 @@ import traceback
 
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
-from datetime import date
+from datetime import datetime
 
 from .logger import get_logger
 from .env import env
@@ -49,7 +49,7 @@ def callback_wrapper(ch: BlockingChannel, method: Basic.Deliver, properties: Bas
   except Exception as e:
 
     erro = {
-        'date': date.today().isoformat(),
+        'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'message' : str(e),
         'trace': traceback.format_exc()
     }

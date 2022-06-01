@@ -938,9 +938,8 @@ class CoreLib(object):
     @keyword('Resolver captcha imagem FGTS')
     def resolver_captcha_imagem(self,retry: int = 0):
         console('Resolvendo captcha Imagem')
-        self.data = {
-            'found': True
-        }
+        self.data = {'found': True}
+        self.page.wait_for_selector('#captchaImg_N2')
         card = self.page.query_selector('#captchaImg_N2')
         result = card.screenshot()
         solver = dataUriCaptcha()
