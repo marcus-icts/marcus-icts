@@ -137,6 +137,29 @@ class CoreLib(object):
 
         write_results(json.dumps(table_data, ensure_ascii=False))
 
+    @keyword('Pegar dados mexico em JSON')
+    def mexico_table(self, selector: str):
+        '''
+        Realiza o parse da tabela correspondete ao `selector` para JSON e escreve o resultado no arquivo XML de saída do Robot (tag `crawler-result`).
+
+        Parâmetros:
+        - `selector`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
+
+        Exemplos:
+        | Pegar dados da tabela em JSON | .minha-tabela |
+        | Pegar dados da tabela em JSON | .minha-tabela | 2 | 4 |
+        '''
+        table_data: dict = {'data': []}
+        raw_data = self.page.query_selector(selector).inner_text().split('\n')
+        tempheaders = raw_data[9:29]
+        headers = [str for str in tempheaders if str != '\t']
+        results = raw_data[29:]
+        for result in results:
+            result_arr = result.split('\t')
+            table_data['data'].append(dict(zip(headers, result_arr)))
+        table_data['evidence'] = self.take_evidence()
+        write_results(json.dumps(table_data, ensure_ascii=False))
+
     @keyword('Printar tela')
     def take_evidence(self):
         evidence_bytes = self.page.screenshot(full_page=True)
