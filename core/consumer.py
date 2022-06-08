@@ -55,6 +55,11 @@ def callback_wrapper(ch: BlockingChannel, method: Basic.Deliver, properties: Bas
     }
     request = json.loads(body.decode('UTF-8'))
     request['error'] = erro
-    ch.basic_publish('', properties.reply_to, json.dumps(request, indent=4, sort_keys=True, ensure_ascii=False))
+    ch.basic_publish(
+        '',
+        properties.reply_to,
+        json.dumps(request, indent=4, sort_keys=True, ensure_ascii=False),
+        properties
+    )
     ch.basic_ack(method.delivery_tag)
     logger.error(" [x] Unexpected error while processing message: %s. Message: '%r'. The message was forwarded to the error queue." % (repr(e), request))

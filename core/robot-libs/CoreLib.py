@@ -95,6 +95,17 @@ class CoreLib(object):
         | Digitar texto em campo | meuemail@gmail.com | \\#email-input |
         '''
         self.page.fill(selector, text)
+    @keyword('Digitar texto em campo nome comprasal')
+    def input_text(self, text: str):
+        '''
+        Preenche o `input` que corresponde ao `selector` com o `text` informado
+        Parâmetros:
+        - `text`: texto a ser preenchido no campo
+
+        Exemplo:
+        | Digitar texto em campo | meuemail@gmail.com |
+        '''
+        self.page.fill("body > app-root > div.min-vh-100.mb-2.container > app-providers > div:nth-child(2) > div > div > div:nth-child(1) > div > input", text)
 
     @keyword('Esperar até que elemento esteja visivel')
     def wait_for_element(self, selector: str):
@@ -179,65 +190,58 @@ class CoreLib(object):
         """
         table_data: dict = {"data": []}
         has_more_providers = True
-        selector = "#comprasal_1 table tbody tr"#td:first-child a"
-        while has_more_providers:
-            self.page.wait_for_selector(selector)
-            table_lines = self.page.query_selector_all(selector)
-            for line in table_lines:
-                table_link = line.query_selector('td:first-child a')
-                provider_details = {}
-                table_link.click()
+        selector = "body > app-root > div.min-vh-100.mb-2.container > app-providers > div:nth-child(3) > div > div > app-provider-list > div.card.rounded-0.shadow.p-0 > ul"
+        self.page.wait_for_selector(selector)
+        table_lines = self.page.query_selector_all(selector)
+        # console(table_lines)
+        for line in table_lines:
+            line.query_selector('li > app-provider-item > a > i').click()
+            provider_details = {}
+            # Provider details
+            provider_details = self.page.wait_for_selector(
+                'body > app-root > div.min-vh-100.mb-2.container > app-provider-detail'
+            ).inner_text().split('\n')
+            # console(provider_details)
 
-                # Provider details
-                provider_details_raw = self.page.wait_for_selector('table.ui-panelgrid.ui-widget tbody').inner_text().split(
-                    '\n')
-                i = 0
-                for provider_details_raw_line in provider_details_raw:
-                    modal_data_columns = provider_details_raw_line.split('\t')
-                    if modal_data_columns[0]:
-                        index = modal_data_columns[0].replace(
-                            ':', '').replace(' ', '_').lower()
-                        provider_details[index] = modal_data_columns[1] if len(
-                            modal_data_columns) == 2 else ''
-                    i += 1
-                    if i == 3:
-                        break
-                provider_details['sitio_web'] = provider_details_raw[5][0]
+            tempDetails = provider_details[5:20]
+            tempDetails = [str for str in tempDetails if str != '']
 
-                # Provided services
-                has_more_services = True
-                provided_services = []
-                while has_more_services:
-                    provided_services.extend(
-                        self.page.wait_for_selector('tbody#comprasal_2\\:obsProveedores_data').inner_text().split('\n'))
+            index = 0
+            headers = []
+            data = []
+            for str in tempDetails:
+                if (self.check_is_odd(number=index)):
+                    data.append(str)
+                else:
+                    headers.append(str)
+                index += 1
 
-                    # Services pagination
-                    next_services = self.page.query_selector(
-                        '#comprasal_2\\:obsProveedores_paginator_bottom a.ui-paginator-next:not(.ui-state-disabled)')
-                    if next_services:
-                        next_services.click()
-                        BuiltIn().sleep('200ms')
+            tempAssets = provider_details[23:]
+
+            assets = {}
+
+            if tempAssets:
+                tempAssets = [str for str in tempAssets if str != '']
+                idx = 0
+                assetHeaders = []
+                assetData = []
+                for str in tempAssets:
+                    if (self.check_is_odd(number=idx)):
+                        assetData.append(str)
                     else:
-                        has_more_services = False
+                        assetHeaders.append(str)
+                    idx += 1
 
-                self.page.click('a.ui-dialog-titlebar-close')
-                table_data['data'].append({
-                    'nombre': table_link.inner_text(),
-                    'comercial': line.query_selector('td:last-child a').inner_text(),
-                    'detalles_del_provedor': provider_details,
-                    'bienes_obras_servicos': provided_services
-                })
+                assets = dict(zip(assetHeaders, assetData))
 
-            # Providers pagination
-            next_providers = self.page.query_selector(
-                '#comprasal_1\\:resultados_paginator_bottom a.ui-paginator-next:not(.ui-state-disabled)')
-            if next_providers:
-                next_providers.click()
-                BuiltIn().sleep('200ms')
-            else:
-                has_more_providers = False
+            table_data['data'].append({
+                'nombre': provider_details[0],
+                'comercial': provider_details[2],
+                'detalles_del_provedor': dict(zip(headers, data)),
+                'bienes_obras_servicos': assets,
+                'evidence': self.take_evidence()
+            })
 
-        table_data['evidence'] = self.take_evidence()
         write_results(json.dumps(table_data, ensure_ascii=False))
 
     @keyword('Extrair resultados ComprarArgentina')
@@ -953,11 +957,6 @@ class CoreLib(object):
             write_results(json.dumps(self.data, ensure_ascii=False))
             print("task finished with error "+solver.error_code)
 
-        def check_is_odd(number):
-            num = int(number)
-            if (num % 2) == 0:
-                return False
-            return True
     @keyword('Resolver captcha imagem FGTS')
     def resolver_captcha_imagem(self,retry: int = 0):
         console('Resolvendo captcha Imagem')
@@ -1020,3 +1019,9 @@ class CoreLib(object):
             self.data['regular'] = False
         self.data['regularidade'] = texto
         write_results(json.dumps(self.data, ensure_ascii=False))
+
+    def check_is_odd(self, number):
+        num = int(number)
+        if (num % 2) == 0:
+            return False
+        return True
