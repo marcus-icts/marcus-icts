@@ -1,3 +1,4 @@
+from curses import window
 import json, re, base64
 from functools import reduce
 
@@ -95,6 +96,7 @@ class CoreLib(object):
         | Digitar texto em campo | meuemail@gmail.com | \\#email-input |
         '''
         self.page.fill(selector, text)
+
     @keyword('Digitar texto em campo nome comprasal')
     def input_text(self, text: str):
         '''
@@ -189,13 +191,17 @@ class CoreLib(object):
         | Extrair resultados CompraSal |
         """
         table_data: dict = {"data": []}
-        has_more_providers = True
-        selector = "body > app-root > div.min-vh-100.mb-2.container > app-providers > div:nth-child(3) > div > div > app-provider-list > div.card.rounded-0.shadow.p-0 > ul"
+        selector = "body > app-root > div.min-vh-100.mb-2.container > app-providers > div:nth-child(3) > div > div > app-provider-list > div.card.rounded-0.shadow.p-0 > ul > li"
         self.page.wait_for_selector(selector)
         table_lines = self.page.query_selector_all(selector)
         # console(table_lines)
+        origin = self.page.evaluate('window.location.origin')
+        urls = []
         for line in table_lines:
-            line.query_selector('li > app-provider-item > a > i').click()
+            urls.append(origin +line.query_selector('app-provider-item > a').get_attribute('href'))
+        # console(urls)
+        for url in  urls:
+            self.page.goto(url, timeout=180000)
             provider_details = {}
             # Provider details
             provider_details = self.page.wait_for_selector(
@@ -767,6 +773,7 @@ class CoreLib(object):
         data['evidence'] = 'data:image/png;base64,{}'.format(evidence_b64)
 
         write_results(json.dumps(data, ensure_ascii=False))
+
     @keyword('Resolver QsaCaptcha')
     def resolver_qsacaptcha(self, cnpj: str):
         console('Resolvendo QsaCaptcha')

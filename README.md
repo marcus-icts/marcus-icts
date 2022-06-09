@@ -21,6 +21,7 @@ Caso queira rodar o crawler diretamente - para testes e afins - basta executar o
 (venv) $ python main.py run --subject comprasal_lista_provedores --related-data '{"name": "juan carlos"}'
 
 (venv) $ python main.py run -s compras_publicas_equador -d '{"razao_social": "lexim"}'
+(venv) $ python main.py run -s perfil_prov -d '{"ruc": "J Y S CONTRATISTAS GENERALES Y PROVEEDORES S.R.L."}'
 ```
 Onde *subject* é o nome do script do Robot (sem a exntesão .robot) e *related-data* são os dados necessários para realizar a busca.
 
