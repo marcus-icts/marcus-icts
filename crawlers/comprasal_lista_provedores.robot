@@ -4,7 +4,7 @@ Library  ../core/robot-libs/CoreLib.py
 
 *** Tasks ***
 Buscar em Comprasal
-    Abrir o navegador em                       https://www.comprasal.gob.sv/comprasalweb/proveedores    false    3000
+    Abrir o navegador em                       https://www.comprasal.gob.sv/comprasalweb/proveedores
     Digitar texto em campo nome comprasal      ${name}
     Extrair resultados CompraSal
     [Teardown]  Fechar navegador e parar playwright
