@@ -92,9 +92,21 @@ class CoreLib(object):
         - `selector`: seletor css ou xpath do elemento. Para saber mais verificar a [https://playwright.dev/docs/core-concepts#selectors|documentação oficial do playwright sobre seletores].
 
         Exemplo:
-        | Digitar texto em campo | meuemail@gmail.com | \\#email-input |
+        | Digitar texto em campo | meuemail@gmail.com | #email-input |
         '''
         self.page.fill(selector, text)
+
+    @keyword('Digitar texto em campo nome comprasal')
+    def input_text_comprasal(self, text: str):
+        '''
+        Preenche o `input` que corresponde ao `selector` com o `text` informado
+        Parâmetros:
+        - `text`: texto a ser preenchido no campo
+
+        Exemplo:
+        | Digitar texto em campo | meuemail@gmail.com |
+        '''
+        self.page.fill("body > app-root > div.min-vh-100.mb-2.container > app-providers > div:nth-child(2) > div > div > div:nth-child(1) > div > input", text)
 
     @keyword('Esperar até que elemento esteja visivel')
     def wait_for_element(self, selector: str):
@@ -709,9 +721,9 @@ class CoreLib(object):
         data['has_contract'] = True if no_contract is None else False
 
         card.click()
-        self.click_at('//html/body/app-root/div/div/app-prov-ficha/div/div/div[1]/div[1]/div/div[3]/span[1]')
-
+        self.click_at('//html/body/app-root/div/div/app-prov-ficha/div/div/div[1]/div[2]/div/div[3]/span[1]')
         # Pega os dados cadastrais
+
         data['registration'] = {
             'Nombre': self.page.query_selector('.supplier-card .header .page__title').inner_text()
         }
@@ -758,9 +770,7 @@ class CoreLib(object):
         data['partners'] = reduce(partners_reducer, partners_content, [])
 
         # Pegar a evidencia
-        evidence_bytes = self.page.screenshot(full_page=True)
-        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
-        data['evidence'] = 'data:image/png;base64,{}'.format(evidence_b64)
+        data['evidence'] = self.take_evidence()
 
         write_results(json.dumps(data, ensure_ascii=False))
     @keyword('Resolver QsaCaptcha')

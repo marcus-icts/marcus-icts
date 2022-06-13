@@ -18,7 +18,7 @@ A configuração da aplicação é feita através de variáveis de ambiente. Ver
 Caso queira rodar o crawler diretamente - para testes e afins - basta executar o comando como nos exemplos abaixo:
 ```sh
 (venv) $ python main.py run --subject compras_publicas_ecuador --related-data '{"razao_social": "lexim"}'
-
+(venv) $ python main.py run --subject comprasal_lista_provedores --related-data '{"name": "juan carlos"}'
 (venv) $ python main.py run -s compras_publicas_equador -d '{"razao_social": "lexim"}'
 ```
 Onde *subject* é o nome do script do Robot (sem a exntesão .robot) e *related-data* são os dados necessários para realizar a busca.
