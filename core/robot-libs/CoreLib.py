@@ -1020,3 +1020,30 @@ class CoreLib(object):
             self.data['regular'] = False
         self.data['regularidade'] = texto
         write_results(json.dumps(self.data, ensure_ascii=False))
+    @keyword('Selecionar')
+    def selecionar(self, element: str, value: str):
+        self.page.select_option(element, value)
+    @keyword('Honduras')
+    def honduras(self):
+        self.data = {
+            'found': True
+        }
+        try:
+            self.page.wait_for_selector('//*[@id="ctl00_cphCuerpo_gvProveedores_ctl02_hpObservaciones"]')
+            self.page.query_selector('//*[@id="ctl00_cphCuerpo_gvProveedores_ctl02_hpObservaciones"]').click()
+            self.data["cnpj"] = self.page.query_selector('//*[@id="ctl00_cphCuerpo_dvProveedor"]/tbody/tr[1]/td[2]').inner_text()
+            self.data['razao_social'] = self.page.query_selector('//*[@id="ctl00_cphCuerpo_dvProveedor"]/tbody/tr[2]/td[2]').inner_text()
+            self.data['nome_fantasia'] = self.page.query_selector('//*[@id="ctl00_cphCuerpo_dvProveedor"]/tbody/tr[3]/td[2]').inner_text()
+            self.data['categoria'] = self.page.query_selector('//*[@id="ctl00_cphCuerpo_dvProveedor"]/tbody/tr[4]/td[2]').inner_text()
+            self.data['tipo_empresa'] = self.page.query_selector('//*[@id="ctl00_cphCuerpo_dvProveedor"]/tbody/tr[9]/td[2]').inner_text()
+            self.data['inicio'] = self.page.query_selector('//*[@id="ctl00_cphCuerpo_dvProveedor"]/tbody/tr[11]/td[2]').inner_text()
+            self.data['contato'] = self.page.query_selector('//*[@id="ctl00_cphCuerpo_dvProveedor"]/tbody/tr[13]/td[2]').inner_text()
+            self.data['endereco'] = self.page.query_selector('//*[@id="ctl00_cphCuerpo_dvProveedor"]/tbody/tr[14]/td[2]').inner_text()
+            observacao = self.page.query_selector('//*[@id="ctl00_cphCuerpo_gvObservaciones"]/tbody/tr[2]/td[1]')
+            if observacao:
+                self.data['observacao'] = self.page.query_selector('//*[@id="ctl00_cphCuerpo_gvObservaciones"]/tbody/tr[2]/td[1]').inner_text()
+        except Exception as e:
+            self.data['found'] = False
+            self.data['error'] = 'Resultado não encontrado'
+        write_results(json.dumps(self.data, ensure_ascii=False))
+
