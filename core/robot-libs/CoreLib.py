@@ -1050,8 +1050,32 @@ class CoreLib(object):
             self.data['found'] = False
             self.data['error'] = 'Resultado não encontrado'
         write_results(json.dumps(self.data, ensure_ascii=False))
-
-
+    @keyword('Extrair span TCU')
+    def extrairTcu(self):
+        self.data = {
+            'found': True
+        }
+        regular = self.page.query_selector('body > p:nth-child(8) > font > span')
+        regular_caso_positivo = self.page.query_selector('blablabla')
+        check_regular = regular != None
+        check_caso_positivo = regular_caso_positivo != None
+        if check_regular :
+            console('Caso negativo')
+            self.data['span'] = self.page.query_selector('body > p:nth-child(8) > font > span').inner_text()
+            self.data['valid_response'] = True
+            self.data['alert'] = True
+        elif check_caso_positivo :
+            console('Caso positivo')
+            self.data['span'] = self.page.query_selector('blabla').inner_text()
+            self.data['valid_response'] = True
+            self.data['alert'] = False
+        else :
+            console('Resultado não pode ser exibido')
+            self.data['span'] = self.page.query_selector('body > blockquote > p:nth-child(3) > span').inner_text()
+            self.data['valid_response'] = False
+        console('Capturando evidencia')
+        self.data['evidence'] =  self.take_evidence()
+        write_results(json.dumps(self.data, ensure_ascii=False))
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
