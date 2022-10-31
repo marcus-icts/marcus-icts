@@ -1051,7 +1051,34 @@ class CoreLib(object):
             self.data['error'] = 'Resultado não encontrado'
         write_results(json.dumps(self.data, ensure_ascii=False))
 
-
+    @keyword('Pegar dados da tabela Falencia')
+    def get_table_information(self):
+        ocorrencias = self.page.query_selector_all('//*[@id="gridResultado"]/tbody')
+        ocorrencia_geral = {}
+        ocorrencia_key = 1
+        for ocorrencia in ocorrencias:
+            linha = {}
+            query_text = ocorrencia.query_selector('td:nth-child(2)')
+            if query_text != None :
+                linha['razao_social'] = ocorrencia.query_selector('td:nth-child(1)').inner_text()
+                linha['cnpj'] = ocorrencia.query_selector('td:nth-child(2)').inner_text()
+                linha['ocorrencia'] = ocorrencia.query_selector('td:nth-child(3)').inner_text()
+                linha['data'] = ocorrencia.query_selector('td:nth-child(4)').inner_text()
+                linha['vara'] = ocorrencia.query_selector('td:nth-child(5)').inner_text()
+                linha['fonte'] = ocorrencia.query_selector('td:nth-child(6)').inner_text()
+                linha['processo'] = ocorrencia.query_selector('td:nth-child(7)').inner_text()
+                ocorrencia_geral[ocorrencia_key] = linha
+                ocorrencia_key += 1
+            else :
+                console('Não tem informação de alerta')
+        if ocorrencia_key > 1:
+            self.data['alertas'] = ocorrencia_key - 1
+        else :
+            self.data['alertas'] = 0
+        console(ocorrencia_key)
+        self.data['ocorrencias'] = ocorrencia_geral
+        console(self.data)
+        write_results(json.dumps(self.data, ensure_ascii=False))
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
