@@ -1051,7 +1051,47 @@ class CoreLib(object):
             self.data['error'] = 'Resultado não encontrado'
         write_results(json.dumps(self.data, ensure_ascii=False))
 
+    @keyword('Resolver captcha imagem')
+    def resolver_captcha_imagem(self,selector: str, input: str, click:str, check: str, retry: int = 0):
+        console('Resolvendo captcha Imagem')
+        self.page.wait_for_selector(selector)
+        card = self.page.query_selector(selector)
+        result = card.screenshot()
+        solver = dataUriCaptcha()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        captcha_text = solver.solve_and_return_solution(base64.encodebytes(result))
+        console(captcha_text)
+        if captcha_text != 0:
+            console("captcha text "+captcha_text)
+            self.captcha = captcha_text
+            self.data['captcha'] = captcha_text
+            self.page.fill(input, captcha_text)
 
+            self.page.query_selector(click).click()
+            try:
+                self.page.query_selector(check).inner_text()
+            except Exception as e:
+                console('Tentando novamente, deu erro de tempo ou captcha errado')
+                console(str(e))
+                if retry < 3:
+                    self.resolver_captcha_imagem(retry+1)
+                else:
+                    console('Finalizando após 4 tentativas')
+                    self.data['found'] = False
+                    self.data['error'] = '4 Tentativas de resolver captcha e não conseguiu, pode ser por tempo ou texto errado'
+                    write_results(json.dumps(self.data, ensure_ascii=False))
+        else:
+            self.data['found'] = False
+            self.data['captchaError'] = solver.error_code
+            write_results(json.dumps(self.data, ensure_ascii=False))
+            print("task finished with error "+solver.error_code)
+    @keyword('Bacen')
+    def bacen(self):
+        self.data['found'] = True
+        self.data['result'] = self.page.query_selector('//*[@class="textoPrincipal"]').inner_text()
+        self.data['evidence'] = self.take_evidence()
+        write_results(json.dumps(self.data, ensure_ascii=False))
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
