@@ -4,7 +4,7 @@ Library  ../core/robot-libs/CoreLib.py
 
 *** Tasks ***
 Buscar em TCU PJ
-    Abrir o navegador em                                                    https://contas.tcu.gov.br/certidao/Web/Certidao/NadaConsta/home.faces    true
+    Abrir o navegador em                                                    https://contas.tcu.gov.br/certidao/Web/Certidao/NadaConsta/home.faces
     Clicar em                                                               //*[@id="formEmitirCertidaoNadaConsta:tipoPesquisa:1"]
     Digitar Texto Em Campo                                                  ${cnpj}  //*[@id="formEmitirCertidaoNadaConsta:txtCpfOuCnpj"]
     Clicar em                                                               //*[@id="formEmitirCertidaoNadaConsta:btnEmitirCertidao"]
