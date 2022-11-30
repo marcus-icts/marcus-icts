@@ -1050,7 +1050,13 @@ class CoreLib(object):
             self.data['found'] = False
             self.data['error'] = 'Resultado não encontrado'
         write_results(json.dumps(self.data, ensure_ascii=False))
-
+    @keyword('Clicar TRF1')
+    def clicar_trf1(self):
+        self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > h3').click()
+        self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > form > div > div > button > span').click()
+        self.data['evidence'] = self.take_evidence()
+        self.data['alert'] = False
+        write_results(json.dumps(self.data, ensure_ascii=False))
 
     def check_is_odd(self, number):
         num = int(number)
