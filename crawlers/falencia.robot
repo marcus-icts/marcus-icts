@@ -7,6 +7,6 @@ Buscar em Falencia
     Abrir o navegador em                       https://bancofalencia.tst.jus.br/
     Digitar Texto Em Campo                     ${cnpj}  //*[@id="cnpj"]
     Clicar em                                  //*[@id="btPesquisar"]
-    Esperar                                    1500ms
+    Esperar                                    5000ms
     Pegar dados da tabela Falencia
     [Teardown]  Fechar navegador e parar playwright
