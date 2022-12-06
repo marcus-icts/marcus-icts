@@ -1075,7 +1075,7 @@ class CoreLib(object):
             self.data['alertas'] = ocorrencia_key - 1
         else :
             self.data['alertas'] = 0
-        console(ocorrencia_key)
+        self.data['evidence'] = self.take_evidence()
         self.data['ocorrencias'] = ocorrencia_geral
         console(self.data)
         write_results(json.dumps(self.data, ensure_ascii=False))
