@@ -1195,6 +1195,7 @@ class CoreLib(object):
     def bacen(self):
         self.data['found'] = True
         check_class = self.page.query_selector('//*[@class="textoPrincipal"]')
+        console(check_class)
         if check_class != None:
             self.data['evidence'] = self.take_evidence()
             self.data['result'] = self.page.query_selector('//*[@class="textoPrincipal"]').inner_text()
