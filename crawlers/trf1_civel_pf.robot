@@ -8,7 +8,7 @@ Buscar em TRF5 criminal PF
     Esperar                                   3
     Clicar em                                 //*[@id="mat-select-0"]
     Esperar                                   3
-    Clicar em                                 //*[@id="mat-option-2"]
+    Clicar em                                 //*[@id="mat-option-1"]
     Esperar                                   3
     Clicar em                                 //*[@id="mat-chip-list-input-0"]
     Esperar                                   3

@@ -1050,14 +1050,96 @@ class CoreLib(object):
             self.data['found'] = False
             self.data['error'] = 'Resultado não encontrado'
         write_results(json.dumps(self.data, ensure_ascii=False))
+    @keyword('Extrair span TCU')
+    def extrairTcu(self):
+        self.data = {
+            'found': True
+        }
+        regular = self.page.query_selector('body > p:nth-child(8) > font > span')
+        check_regular = regular != None
+        if check_regular :
+            console('Caso negativo')
+            self.data['span'] = self.page.query_selector('body > p:nth-child(8) > font > span').inner_text()
+            self.data['valid_response'] = True
+            self.data['alert'] = False
+            console('Capturando evidencia')
+            self.data['evidence'] =  self.take_evidence()
+        else :
+            console('Caso positivo')
+            self.data['span'] = self.page.query_selector('body > blockquote > p:nth-child(3) > span').inner_text()
+            self.data['valid_response'] = True
+            self.data['alert'] = True
+            with self.context.expect_page() as new_page_info:
+                self.page.query_selector('body > blockquote > p:nth-child(3) > span > a:nth-child(2)').click()
+            new_page = new_page_info.value
+            new_page.wait_for_load_state()
+            console('Capturando evidencia')
+            evidence_bytes = new_page.screenshot(full_page=True)
+            evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
+            self.data['evidence'] =  'data:image/png;base64,{}'.format(evidence_b64)
+        write_results(json.dumps(self.data, ensure_ascii=False))
+
+    @keyword('Pegar dados da tabela Falencia')
+    def get_table_information(self):
+        self.data['found'] = True
+        ocorrencias = self.page.query_selector_all('//*[@id="gridResultado"]/tbody')
+        ocorrencia_geral = {}
+        ocorrencia_key = 1
+        for ocorrencia in ocorrencias:
+            linha = {}
+            query_text = ocorrencia.query_selector('td:nth-child(2)')
+            if query_text != None :
+                linha['razao_social'] = ocorrencia.query_selector('td:nth-child(1)').inner_text()
+                linha['cnpj'] = ocorrencia.query_selector('td:nth-child(2)').inner_text()
+                linha['ocorrencia'] = ocorrencia.query_selector('td:nth-child(3)').inner_text()
+                linha['data'] = ocorrencia.query_selector('td:nth-child(4)').inner_text()
+                linha['vara'] = ocorrencia.query_selector('td:nth-child(5)').inner_text()
+                linha['fonte'] = ocorrencia.query_selector('td:nth-child(6)').inner_text()
+                linha['processo'] = ocorrencia.query_selector('td:nth-child(7)').inner_text()
+                ocorrencia_geral[ocorrencia_key] = linha
+                ocorrencia_key += 1
+                self.data['evidence'] = self.take_evidence()
+                self.data['ocorrencias'] = ocorrencia_geral
+            else :
+                console('Não tem informação de alerta')
+        if ocorrencia_key > 1:
+            self.data['alertas'] = ocorrencia_key - 1
+        else :
+            self.data['evidence'] = self.take_evidence()
+            self.data['alertas'] = 0
+
+        console(self.data)
+        write_results(json.dumps(self.data, ensure_ascii=False))
+    @keyword('Clicar TRF1 PJ')
+    def clicar_trf1_pj(self):
+        self.page.locator('text=Considerar Matriz e Filiais').click()
+
     @keyword('Clicar TRF1')
     def clicar_trf1(self):
         self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > h3').click()
+        self.wait_sleep(2)
         self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > form > div > div > button > span').click()
-        self.data['evidence'] = self.take_evidence()
-        self.data['alert'] = False
+        self.wait_sleep(10)
+        self.data['found'] = True
+        check_certidao = self.page.query_selector('//*[@class="certidao-viewer"]')
+        check_alerta = self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-analise-form > div.info > p.aviso > strong')
+        if check_certidao != None:
+            with self.page.expect_download() as download_info:
+                self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-certidao-viewer > div > button').click()
+            download = download_info.value
+            console(download.path())
+            data = open(download.path(), "rb").read()
+            evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+            console(evidence_b64)
+            self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+            self.data['alertas'] = 0
+        elif check_alerta != None:
+            self.data['evidence'] = self.take_evidence()
+            self.data['alertas'] = 1
+        else :
+            self.data['found'] = False
+            self.data['error'] = 'Resultado não esperado'
         write_results(json.dumps(self.data, ensure_ascii=False))
-
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
