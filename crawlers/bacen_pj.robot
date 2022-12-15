@@ -10,5 +10,6 @@ Buscar em Bacen Pj
     Esperar                                                 600ms
     Digitar texto em campo                                  ${cnpj}    //*[@name="panelCamposConteudo:containerCNPJ:textFieldCNPJ"]
     Resolver captcha imagem bacen                           //*[@id="imgCodigoa"]   //*[@name="captchaPanel:txtCodigo"]     //*[@id="botaoEmitir3"]     //*[@class="msgErro"]
+    Esperar                     3
     Bacen
     [Teardown]  Fechar navegador e parar playwright
