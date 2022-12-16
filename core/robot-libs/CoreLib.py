@@ -1107,8 +1107,104 @@ class CoreLib(object):
         else :
             self.data['evidence'] = self.take_evidence()
             self.data['alertas'] = 0
+        write_results(json.dumps(self.data, ensure_ascii=False))
+    @keyword('Resolver captcha imagem')
+    def resolver_captcha_imagem(self,selector: str, input: str, click:str, check: str, retry: int = 0):
+        console('Resolvendo captcha Imagem')
+        self.page.wait_for_selector(selector)
+        card = self.page.query_selector(selector)
+        result = card.screenshot()
+        solver = dataUriCaptcha()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        captcha_text = solver.solve_and_return_solution(base64.encodebytes(result))
+        console(captcha_text)
+        if captcha_text != 0:
+            console("captcha text "+captcha_text)
+            self.captcha = captcha_text
+            self.data['captcha'] = captcha_text
+            self.page.fill(input, captcha_text)
 
-        console(self.data)
+            self.page.query_selector(click).click()
+            check_true_captcha = self.page.query_selector(check)
+            if check_true_captcha == None :
+                console('Passou pelo captcha corretamente')
+            else :
+                console('Tentando novamente, deu erro de tempo ou captcha errado')
+                if retry < 3:
+                    self.resolver_captcha_imagem(selector, input, click, check, retry+1)
+                else:
+                    console('Finalizando após 4 tentativas')
+                    self.data['found'] = False
+                    self.data['error'] = '4 Tentativas de resolver captcha e não conseguiu, pode ser por tempo ou texto errado'
+                    write_results(json.dumps(self.data, ensure_ascii=False))
+        else:
+            self.data['found'] = False
+            self.data['captchaError'] = solver.error_code
+            write_results(json.dumps(self.data, ensure_ascii=False))
+            print("task finished with error "+solver.error_code)
+
+    @keyword('Resolver captcha imagem bacen')
+    def resolver_captcha_imagem_bacen(self,selector: str, input: str, click:str, check: str, retry: int = 0):
+        console('Resolvendo captcha Imagem')
+        self.page.wait_for_selector(selector)
+        card = self.page.query_selector(selector)
+        result = card.screenshot()
+        solver = dataUriCaptcha()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        captcha_text = solver.solve_and_return_solution(base64.encodebytes(result))
+        console(captcha_text)
+        if captcha_text != 0:
+            console("captcha text "+captcha_text)
+            self.captcha = captcha_text
+            self.data['captcha'] = captcha_text
+            self.page.fill(input, captcha_text)
+
+            self.page.query_selector(click).click()
+            check_true_captcha = self.page.query_selector(check)
+            string = ' Não foi possível emitir a certidão automaticamente. Por gentileza, apresente seu pedido de certidão negativa ao Departamento de Resolução e de Ação Sancionadora (Derad), via protocolo digital (https://www.bcb.gov.br/acessoinformacao/protocolodigital). Durante a protocolização, selecione o assunto "Processo Administrativo Sancionador".'
+            string_outro_irregular = ' Não foi possível emitir a certidão automaticamente. Por gentileza, apresente seu pedido de certidão negativa via protocolo digital (https://www.bcb.gov.br/acessoinformacao/protocolodigital). Durante a protocolização, selecione o assunto "Outros assuntos", sugerindo se tratar de solicitação de "Certidão Negativa de Administração de Instituição em Liquidação Extrajudicial (Lei Complementar 64/1990, art. 1º, l, i)", a ser direcionado ao Departamento de Resolução e de Ação Sancionadora (Derad).'
+            string_irregular = 'O CPF informado não está com a situação regular'
+            if check_true_captcha == None:
+                console('Passou pelo captcha corretamente')
+            elif (
+                    (self.page.query_selector(check).inner_text() == string) or
+                    (self.page.query_selector(check).inner_text() == string_irregular) or
+                    (self.page.query_selector(check).inner_text() == string_outro_irregular)
+                ) :
+                console('Passou pelo captcha corretamente gerando alerta')
+            else :
+                console(self.page.query_selector(check).inner_text())
+                console(string)
+                console(string_irregular)
+                console('Tentando novamente, deu erro de tempo ou captcha errado')
+                if retry < 3:
+                    self.resolver_captcha_imagem(selector, input, click, check, retry+1)
+                else:
+                    console('Finalizando após 4 tentativas')
+                    self.data['found'] = False
+                    self.data['error'] = '4 Tentativas de resolver captcha e não conseguiu, pode ser por tempo ou texto errado'
+                    write_results(json.dumps(self.data, ensure_ascii=False))
+        else:
+            self.data['found'] = False
+            self.data['captchaError'] = solver.error_code
+            write_results(json.dumps(self.data, ensure_ascii=False))
+            print("task finished with error "+solver.error_code)
+    @keyword('Bacen')
+    def bacen(self):
+        self.data['found'] = True
+        check_class = self.page.query_selector('//*[@class="textoPrincipal"]')
+        console(check_class)
+        if check_class != None:
+            self.data['evidence'] = self.take_evidence()
+            self.data['result'] = self.page.query_selector('//*[@class="textoPrincipal"]').inner_text()
+            self.data['alertas'] = 0
+        else :
+            self.data['evidence'] = self.take_evidence()
+            self.data['result'] = None
+            self.data['alertas'] = 1
+
         write_results(json.dumps(self.data, ensure_ascii=False))
     def check_is_odd(self, number):
         num = int(number)
