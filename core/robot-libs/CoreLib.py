@@ -1124,14 +1124,14 @@ class CoreLib(object):
         check_certidao = self.page.query_selector('//*[@class="certidao-viewer"]')
         check_alerta = self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-analise-form > div.info > p.aviso > strong')
         if check_certidao != None:
-            with self.page.expect_download() as download_info:
-                self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-certidao-viewer > div > button').click()
-            download = download_info.value
-            console(download.path())
-            data = open(download.path(), "rb").read()
-            evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
-            console(evidence_b64)
-            self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+            # with self.page.expect_download() as download_info:
+            #     self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-certidao-viewer > div > button').click()
+            # download = download_info.value
+            # console(download.path())
+            # data = open(download.path(), "rb").read()
+            # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+            # console(evidence_b64)
+            self.data['evidence'] = self.take_evidence()
             self.data['alertas'] = 0
         elif check_alerta != None:
             self.data['evidence'] = self.take_evidence()
