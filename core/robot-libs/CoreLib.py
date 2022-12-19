@@ -1117,9 +1117,9 @@ class CoreLib(object):
     @keyword('Clicar TRF1')
     def clicar_trf1(self):
         self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > h3').click()
-        self.wait_sleep(2)
-        self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > form > div > div > button > span').click()
         self.wait_sleep(10)
+        self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > form > div > div > button > span').click()
+        self.wait_sleep(20)
         self.data['found'] = True
         check_certidao = self.page.query_selector('//*[@class="certidao-viewer"]')
         check_alerta = self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-analise-form > div.info > p.aviso > strong')
@@ -1137,8 +1137,7 @@ class CoreLib(object):
             self.data['evidence'] = self.take_evidence()
             self.data['alertas'] = 1
         else :
-            self.data['found'] = False
-            self.data['error'] = 'Resultado não esperado'
+            raise Exception('Resultado não esperado, fluxo fora do definido.')
         write_results(json.dumps(self.data, ensure_ascii=False))
     def check_is_odd(self, number):
         num = int(number)
