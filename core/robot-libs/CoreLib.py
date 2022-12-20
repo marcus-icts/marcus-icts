@@ -1119,7 +1119,7 @@ class CoreLib(object):
         self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > h3').click()
         self.wait_sleep(10)
         self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > form > div > div > button > span').click()
-        self.wait_sleep(20)
+        self.wait_sleep(40)
         self.data['found'] = True
         check_certidao = self.page.query_selector('//*[@class="certidao-viewer"]')
         check_alerta = self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-analise-form > div.info > p.aviso > strong')
