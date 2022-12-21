@@ -1079,8 +1079,6 @@ class CoreLib(object):
             self.data['evidence'] =  'data:image/png;base64,{}'.format(evidence_b64)
         write_results(json.dumps(self.data, ensure_ascii=False))
 
-    @keyword('Resolver captcha imagem TRF5')
-    def resolver_captcha_imagem_trf(self,selector: str, input: str, click:str, retry: int = 0):
     @keyword('Pegar dados da tabela Falencia')
     def get_table_information(self):
         self.data['found'] = True
@@ -1149,17 +1147,20 @@ class CoreLib(object):
     @keyword('Resolver Download TRF5')
     def download_trf5(self):
         self.wait_sleep(10)
-        with self.page.expect_download() as download_info:
-            self.page.query_selector('#form\:panelBotoes > a.estilocomand').click()
-        download = download_info.value
-        console(download.path())
-        data = open(download.path(), "rb").read()
-        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
-        console(evidence_b64)
-        self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
-        console(self.data)
+        check_ok = self.page.query_selector('//*[@id="form:j_idt151"]')
+        if check_ok != None:
+            self.page.query_selector('//*[@id="form:j_idt151"]').click()
+            with self.page.expect_download() as download_info:
+                self.page.query_selector('#form\:panelBotoes > a.estilocomand').click()
+            download = download_info.value
+            console(download.path())
+            data = open(download.path(), "rb").read()
+            evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+            console(evidence_b64)
+            self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+            console(self.data)
     @keyword('Resolver Download TRF5 Eleitoral')
-    def download_trf5(self):
+    def download_trf5te(self):
         self.wait_sleep(10)
         with self.page.expect_download() as download_info:
             self.page.query_selector('//*[@id="form:j_idt126"]/span"]').click()
@@ -1233,6 +1234,43 @@ class CoreLib(object):
             self.data['alertas'] = 1
 
         write_results(json.dumps(self.data, ensure_ascii=False))
+    @keyword('Resolver captcha imagem TRF5')
+    def resolver_captcha_imagem_trf(self,selector: str, input: str, click:str, retry: int = 0):
+        console('Resolvendo captcha Imagem')
+        self.page.wait_for_selector(selector)
+        card = self.page.query_selector(selector)
+        result = card.screenshot()
+        solver = dataUriCaptcha()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        captcha_text = solver.solve_and_return_solution(base64.encodebytes(result))
+        console(captcha_text)
+        if captcha_text != 0:
+            console("captcha text "+captcha_text)
+            self.captcha = captcha_text
+            self.data['captcha'] = captcha_text
+            self.page.fill(input, captcha_text)
+
+            self.page.query_selector(click).click()
+            try:
+                teste = self.page.query_selector('body > div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable > div.ui-dialog-titlebar.ui-widget-header.ui-corner-all.ui-helper-clearfix')
+                if teste != None :
+                    console('cheguei aqui')
+            except Exception as e:
+                console('Tentando novamente, deu erro de tempo ou captcha errado')
+                console(str(e))
+                if retry < 3:
+                    self.resolver_captcha_imagem(retry+1)
+                else:
+                    console('Finalizando após 4 tentativas')
+                    self.data['found'] = False
+                    self.data['error'] = '4 Tentativas de resolver captcha e não conseguiu, pode ser por tempo ou texto errado'
+                    write_results(json.dumps(self.data, ensure_ascii=False))
+        else:
+            self.data['found'] = False
+            self.data['captchaError'] = solver.error_code
+            write_results(json.dumps(self.data, ensure_ascii=False))
+            print("task finished with error "+solver.error_code)
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
