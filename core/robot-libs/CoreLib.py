@@ -1050,9 +1050,69 @@ class CoreLib(object):
             self.data['found'] = False
             self.data['error'] = 'Resultado não encontrado'
         write_results(json.dumps(self.data, ensure_ascii=False))
+    @keyword('Extrair span TCU')
+    def extrairTcu(self):
+        self.data = {
+            'found': True
+        }
+        regular = self.page.query_selector('body > p:nth-child(8) > font > span')
+        check_regular = regular != None
+        if check_regular :
+            console('Caso negativo')
+            self.data['span'] = self.page.query_selector('body > p:nth-child(8) > font > span').inner_text()
+            self.data['valid_response'] = True
+            self.data['alert'] = False
+            console('Capturando evidencia')
+            self.data['evidence'] =  self.take_evidence()
+        else :
+            console('Caso positivo')
+            self.data['span'] = self.page.query_selector('body > blockquote > p:nth-child(3) > span').inner_text()
+            self.data['valid_response'] = True
+            self.data['alert'] = True
+            with self.context.expect_page() as new_page_info:
+                self.page.query_selector('body > blockquote > p:nth-child(3) > span > a:nth-child(2)').click()
+            new_page = new_page_info.value
+            new_page.wait_for_load_state()
+            console('Capturando evidencia')
+            evidence_bytes = new_page.screenshot(full_page=True)
+            evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
+            self.data['evidence'] =  'data:image/png;base64,{}'.format(evidence_b64)
+        write_results(json.dumps(self.data, ensure_ascii=False))
 
     @keyword('Resolver captcha imagem TRF5')
     def resolver_captcha_imagem_trf(self,selector: str, input: str, click:str, retry: int = 0):
+    @keyword('Pegar dados da tabela Falencia')
+    def get_table_information(self):
+        self.data['found'] = True
+        ocorrencias = self.page.query_selector_all('//*[@id="gridResultado"]/tbody')
+        ocorrencia_geral = {}
+        ocorrencia_key = 1
+        for ocorrencia in ocorrencias:
+            linha = {}
+            query_text = ocorrencia.query_selector('td:nth-child(2)')
+            if query_text != None :
+                linha['razao_social'] = ocorrencia.query_selector('td:nth-child(1)').inner_text()
+                linha['cnpj'] = ocorrencia.query_selector('td:nth-child(2)').inner_text()
+                linha['ocorrencia'] = ocorrencia.query_selector('td:nth-child(3)').inner_text()
+                linha['data'] = ocorrencia.query_selector('td:nth-child(4)').inner_text()
+                linha['vara'] = ocorrencia.query_selector('td:nth-child(5)').inner_text()
+                linha['fonte'] = ocorrencia.query_selector('td:nth-child(6)').inner_text()
+                linha['processo'] = ocorrencia.query_selector('td:nth-child(7)').inner_text()
+                ocorrencia_geral[ocorrencia_key] = linha
+                ocorrencia_key += 1
+                self.data['evidence'] = self.take_evidence()
+                self.data['ocorrencias'] = ocorrencia_geral
+            else :
+                console('Não tem informação de alerta')
+        if ocorrencia_key > 1:
+            self.data['alertas'] = ocorrencia_key - 1
+        else :
+            self.data['evidence'] = self.take_evidence()
+            self.data['alertas'] = 0
+        write_results(json.dumps(self.data, ensure_ascii=False))
+
+    @keyword('Resolver captcha imagem')
+    def resolver_captcha_imagem(self,selector: str, input: str, click:str, check: str, retry: int = 0):
         console('Resolvendo captcha Imagem')
         self.page.wait_for_selector(selector)
         card = self.page.query_selector(selector)
@@ -1069,15 +1129,13 @@ class CoreLib(object):
             self.page.fill(input, captcha_text)
 
             self.page.query_selector(click).click()
-            try:
-                teste = self.page.query_selector('body > div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable > div.ui-dialog-titlebar.ui-widget-header.ui-corner-all.ui-helper-clearfix')
-                if teste != None :
-                    console('cheguei aqui')
-            except Exception as e:
+            check_true_captcha = self.page.query_selector(check)
+            if check_true_captcha == None :
+                console('Passou pelo captcha corretamente')
+            else :
                 console('Tentando novamente, deu erro de tempo ou captcha errado')
-                console(str(e))
                 if retry < 3:
-                    self.resolver_captcha_imagem(retry+1)
+                    self.resolver_captcha_imagem(selector, input, click, check, retry+1)
                 else:
                     console('Finalizando após 4 tentativas')
                     self.data['found'] = False
@@ -1112,6 +1170,69 @@ class CoreLib(object):
         console(evidence_b64)
         self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
         console(self.data)
+
+    @keyword('Resolver captcha imagem bacen')
+    def resolver_captcha_imagem_bacen(self,selector: str, input: str, click:str, check: str, retry: int = 0):
+        console('Resolvendo captcha Imagem')
+        self.page.wait_for_selector(selector)
+        card = self.page.query_selector(selector)
+        result = card.screenshot()
+        solver = dataUriCaptcha()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        captcha_text = solver.solve_and_return_solution(base64.encodebytes(result))
+        console(captcha_text)
+        if captcha_text != 0:
+            console("captcha text "+captcha_text)
+            self.captcha = captcha_text
+            self.data['captcha'] = captcha_text
+            self.page.fill(input, captcha_text)
+
+            self.page.query_selector(click).click()
+            check_true_captcha = self.page.query_selector(check)
+            string = ' Não foi possível emitir a certidão automaticamente. Por gentileza, apresente seu pedido de certidão negativa ao Departamento de Resolução e de Ação Sancionadora (Derad), via protocolo digital (https://www.bcb.gov.br/acessoinformacao/protocolodigital). Durante a protocolização, selecione o assunto "Processo Administrativo Sancionador".'
+            string_outro_irregular = ' Não foi possível emitir a certidão automaticamente. Por gentileza, apresente seu pedido de certidão negativa via protocolo digital (https://www.bcb.gov.br/acessoinformacao/protocolodigital). Durante a protocolização, selecione o assunto "Outros assuntos", sugerindo se tratar de solicitação de "Certidão Negativa de Administração de Instituição em Liquidação Extrajudicial (Lei Complementar 64/1990, art. 1º, l, i)", a ser direcionado ao Departamento de Resolução e de Ação Sancionadora (Derad).'
+            string_irregular = 'O CPF informado não está com a situação regular'
+            if check_true_captcha == None:
+                console('Passou pelo captcha corretamente')
+            elif (
+                    (self.page.query_selector(check).inner_text() == string) or
+                    (self.page.query_selector(check).inner_text() == string_irregular) or
+                    (self.page.query_selector(check).inner_text() == string_outro_irregular)
+                ) :
+                console('Passou pelo captcha corretamente gerando alerta')
+            else :
+                console(self.page.query_selector(check).inner_text())
+                console(string)
+                console(string_irregular)
+                console('Tentando novamente, deu erro de tempo ou captcha errado')
+                if retry < 3:
+                    self.resolver_captcha_imagem(selector, input, click, check, retry+1)
+                else:
+                    console('Finalizando após 4 tentativas')
+                    self.data['found'] = False
+                    self.data['error'] = '4 Tentativas de resolver captcha e não conseguiu, pode ser por tempo ou texto errado'
+                    write_results(json.dumps(self.data, ensure_ascii=False))
+        else:
+            self.data['found'] = False
+            self.data['captchaError'] = solver.error_code
+            write_results(json.dumps(self.data, ensure_ascii=False))
+            print("task finished with error "+solver.error_code)
+    @keyword('Bacen')
+    def bacen(self):
+        self.data['found'] = True
+        check_class = self.page.query_selector('//*[@class="textoPrincipal"]')
+        console(check_class)
+        if check_class != None:
+            self.data['evidence'] = self.take_evidence()
+            self.data['result'] = self.page.query_selector('//*[@class="textoPrincipal"]').inner_text()
+            self.data['alertas'] = 0
+        else :
+            self.data['evidence'] = self.take_evidence()
+            self.data['result'] = None
+            self.data['alertas'] = 1
+
+        write_results(json.dumps(self.data, ensure_ascii=False))
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
