@@ -1155,6 +1155,7 @@ class CoreLib(object):
         solver.set_key(env('CAPTCHA_KEY'))
         captcha_text = solver.solve_and_return_solution(base64.encodebytes(result))
         console(captcha_text)
+        self.wait_sleep(4)
         if captcha_text != 0:
             console("captcha text "+captcha_text)
             self.captcha = captcha_text
@@ -1162,6 +1163,7 @@ class CoreLib(object):
             self.page.fill(input, captcha_text)
 
             self.page.query_selector(click).click()
+            self.wait_sleep(4)
             check_true_captcha = self.page.query_selector(check)
             string = ' Não foi possível emitir a certidão automaticamente. Por gentileza, apresente seu pedido de certidão negativa ao Departamento de Resolução e de Ação Sancionadora (Derad), via protocolo digital (https://www.bcb.gov.br/acessoinformacao/protocolodigital). Durante a protocolização, selecione o assunto "Processo Administrativo Sancionador".'
             string_outro_irregular = ' Não foi possível emitir a certidão automaticamente. Por gentileza, apresente seu pedido de certidão negativa via protocolo digital (https://www.bcb.gov.br/acessoinformacao/protocolodigital). Durante a protocolização, selecione o assunto "Outros assuntos", sugerindo se tratar de solicitação de "Certidão Negativa de Administração de Instituição em Liquidação Extrajudicial (Lei Complementar 64/1990, art. 1º, l, i)", a ser direcionado ao Departamento de Resolução e de Ação Sancionadora (Derad).'
@@ -1175,17 +1177,13 @@ class CoreLib(object):
                 ) :
                 console('Passou pelo captcha corretamente gerando alerta')
             else :
-                console(self.page.query_selector(check).inner_text())
-                console(string)
-                console(string_irregular)
                 console('Tentando novamente, deu erro de tempo ou captcha errado')
                 if retry < 3:
-                    self.resolver_captcha_imagem(selector, input, click, check, retry+1)
+                    self.resolver_captcha_imagem_bacen(selector, input, click, check, retry+1)
                 else:
                     console('Finalizando após 4 tentativas')
-                    self.data['found'] = False
-                    self.data['error'] = '4 Tentativas de resolver captcha e não conseguiu, pode ser por tempo ou texto errado'
-                    write_results(json.dumps(self.data, ensure_ascii=False))
+                    raise Exception('Após 4 tentativas o captcha não foi resolvido')
+                write_results(json.dumps(self.data, ensure_ascii=False))
         else:
             self.data['found'] = False
             self.data['captchaError'] = solver.error_code
@@ -1194,16 +1192,19 @@ class CoreLib(object):
     @keyword('Bacen')
     def bacen(self):
         self.data['found'] = True
-        check_class = self.page.query_selector('//*[@class="textoPrincipal"]')
-        console(check_class)
-        if check_class != None:
+        check_class_file = self.page.query_selector('//*[@class="textoPrincipal"]')
+        check_msg_error = self.page.query_selector('//*[@class="msgErro"]')
+        console(check_class_file)
+        if check_class_file != None:
             self.data['evidence'] = self.take_evidence()
             self.data['result'] = self.page.query_selector('//*[@class="textoPrincipal"]').inner_text()
             self.data['alertas'] = 0
-        else :
+        elif (check_msg_error != None and self.page.query_selector('//*[@class="msgErro"]').inner_text() != 'Digite corretamente o código mostrado na imagem') :
             self.data['evidence'] = self.take_evidence()
             self.data['result'] = None
             self.data['alertas'] = 1
+        else :
+            raise Exception('Após 4 tentativas o captcha não foi resolvido')
 
         write_results(json.dumps(self.data, ensure_ascii=False))
     def check_is_odd(self, number):
