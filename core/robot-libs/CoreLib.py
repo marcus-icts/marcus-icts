@@ -1207,6 +1207,35 @@ class CoreLib(object):
             raise Exception('Após 4 tentativas o captcha não foi resolvido')
 
         write_results(json.dumps(self.data, ensure_ascii=False))
+    @keyword('Clicar TRF1 PJ')
+    def clicar_trf1_pj(self):
+        self.page.locator('text=Considerar Matriz e Filiais').click()
+
+    @keyword('Clicar TRF1')
+    def clicar_trf1(self):
+        self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > h3').click()
+        self.wait_sleep(10)
+        self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-certidao > div > form > div > div > button > span').click()
+        self.wait_sleep(40)
+        self.data['found'] = True
+        check_certidao = self.page.query_selector('//*[@class="certidao-viewer"]')
+        check_alerta = self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-solicitacao-analise-form > div.info > p.aviso > strong')
+        if check_certidao != None:
+            # with self.page.expect_download() as download_info:
+            #     self.page.query_selector('body > pgp-root > div > pgp-certidao > pgp-certidao-viewer > div > button').click()
+            # download = download_info.value
+            # console(download.path())
+            # data = open(download.path(), "rb").read()
+            # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+            # console(evidence_b64)
+            self.data['evidence'] = self.take_evidence()
+            self.data['alertas'] = 0
+        elif check_alerta != None:
+            self.data['evidence'] = self.take_evidence()
+            self.data['alertas'] = 1
+        else :
+            raise Exception('Resultado não esperado, fluxo fora do definido.')
+        write_results(json.dumps(self.data, ensure_ascii=False))
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
