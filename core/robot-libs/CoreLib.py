@@ -12,6 +12,7 @@ from robot.api.logger import console
 from utils import write_results
 from dataUriCaptcha import dataUriCaptcha
 from core.env import env
+from anticaptchaofficial.recaptchav2proxyless import *
 import re
 @library(scope='GLOBAL', version='0.0.1')
 class CoreLib(object):
@@ -1001,6 +1002,7 @@ class CoreLib(object):
             self.data['captchaError'] = solver.error_code
             write_results(json.dumps(self.data, ensure_ascii=False))
             print("task finished with error "+solver.error_code)
+    
     @keyword('Capturar Texto FGTS')
     def capturar_texto(self):
         regular = self.page.query_selector('//*[@id="mainForm"]/div[1]/div/span')
@@ -1024,9 +1026,11 @@ class CoreLib(object):
             self.data['regular'] = False
         self.data['regularidade'] = texto
         write_results(json.dumps(self.data, ensure_ascii=False))
+    
     @keyword('Selecionar')
     def selecionar(self, element: str, value: str):
         self.page.select_option(element, value)
+    
     @keyword('Honduras')
     def honduras(self):
         self.data = {
@@ -1108,6 +1112,7 @@ class CoreLib(object):
             self.data['evidence'] = self.take_evidence()
             self.data['alertas'] = 0
         write_results(json.dumps(self.data, ensure_ascii=False))
+    
     @keyword('Resolver captcha imagem')
     def resolver_captcha_imagem(self,selector: str, input: str, click:str, check: str, retry: int = 0):
         console('Resolvendo captcha Imagem')
@@ -1191,6 +1196,83 @@ class CoreLib(object):
             self.data['captchaError'] = solver.error_code
             write_results(json.dumps(self.data, ensure_ascii=False))
             print("task finished with error "+solver.error_code)
+
+    @keyword('Resolver imagem recaptchaV2')
+    def recaptchaV2(self, site_url: str, website_key: str, retry: int = 0):
+        solver = recaptchaV2Proxyless()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        solver.set_website_url(site_url)
+        solver.set_website_key(website_key)
+        g_response = solver.solve_and_return_solution() #resposta do captcha
+        if g_response != 0:
+            console("Inserindo resposta do captcha no textArea...")
+            self.page.eval_on_selector('.grecaptcha-badge', "(el) => el.removeAttribute('style')")
+            self.page.eval_on_selector('#g-recaptcha-response', "(el) => el.removeAttribute('style')")
+
+            console("Validando resposta do captcha...")
+            self.page.fill('#g-recaptcha-response', g_response)
+            self.page.evaluate(f"window.recaptchaV2CallbackSucessoValidacao(['{g_response}'])")
+
+            console('Limpando tela para obter somente a informação necessária...')
+            self.page.evaluate('Array.from(document.querySelectorAll("body > div:not(#app, #recaptcha-v2)")).forEach((e) => e.remove())')
+
+            self.wait_sleep(15)
+            console('Analisando resultado...')
+            selector_cert_negativa = "#app > div > div:nth-child(2) > div > div.folha-a4 > div > div > table > tbody > tr > td > p:nth-child(5) > span"
+            elem_cert_negativa = self.page.is_visible(selector_cert_negativa)
+            # console(f'neg: {elem_cert_negativa}')
+
+            selector_cert_positiva = "#app > div > div:nth-child(2) > form > div > div > div > div.md-card-content > div:nth-child(1) > p:nth-child(1)"
+            elem_cert_positiva = self.page.is_visible(selector_cert_positiva)
+            # console(f'pos: {elem_cert_positiva}')
+
+            selector_doc_not_found = "body > div.md-dialog > div > div.md-dialog-content.md-theme-default"
+            elem_doc_not_found = self.page.is_visible(selector_doc_not_found)
+            # console(f'nf: {elem_doc_not_found}')
+
+            msg = ''
+            if (elem_cert_negativa):
+                msg = self.page.inner_text(selector_cert_negativa)
+            elif(elem_cert_positiva):
+                msg = self.page.inner_text(selector_cert_positiva)
+            elif(elem_doc_not_found):
+                msg = self.page.inner_text(selector_doc_not_found)
+            
+            console(f'msg: {msg}')
+
+            if (msg == 'CERTIFICAMOS, na forma da lei, que, consultando os sistemas processuais abaixo indicados, NÃO CONSTAM, até a presente data, PROCESSOS de classes CÍVEIS em tramitação contra:'):
+                console('Passou pelo captcha corretamente')
+            elif (msg == 'Essa certidão não pôde ser emitida de forma automática.'):
+                console('Passou pelo captcha corretamente gerando alerta')
+            elif (msg == 'CNPJ não encontrado'):
+                console('Passou pelo captcha corretamente gerando alerta')
+            else:
+                console('Resultado inesperado')
+                console("quebra recaptcha falhou, erro: " + solver.error_code)
+                self.data['found'] = False
+                self.data['captchaError'] = 'Resultado inesperado'
+                write_results(json.dumps(self.data, ensure_ascii=False))
+        else:
+            console("quebra recaptcha falhou, erro: " + solver.error_code)
+            self.data['found'] = False
+            self.data['captchaError'] = solver.error_code
+            write_results(json.dumps(self.data, ensure_ascii=False))
+
+    @keyword('Processar TRF2')
+    def trf2(self):
+        self.data['found'] = True
+        check_class = self.page.query_selector('#app > div > div:nth-child(2) > div > div.folha-a4 > div > div > table > tbody > tr > td > p:nth-child(5)')
+        console(check_class)
+        if check_class != None:
+            self.data['evidence'] = self.take_evidence()
+            self.data['result'] = self.page.query_selector('#app > div > div:nth-child(2) > div > div.folha-a4 > div > div > table > tbody > tr > td > p:nth-child(5)').inner_text()
+            self.data['alertas'] = 0
+        else :
+            self.data['evidence'] = self.take_evidence()
+            self.data['result'] = None
+            self.data['alertas'] = 1
+
     @keyword('Bacen')
     def bacen(self):
         self.data['found'] = True
@@ -1206,6 +1288,7 @@ class CoreLib(object):
             self.data['alertas'] = 1
 
         write_results(json.dumps(self.data, ensure_ascii=False))
+    
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
