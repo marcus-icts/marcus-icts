@@ -1002,7 +1002,7 @@ class CoreLib(object):
             self.data['captchaError'] = solver.error_code
             write_results(json.dumps(self.data, ensure_ascii=False))
             print("task finished with error "+solver.error_code)
-    
+
     @keyword('Capturar Texto FGTS')
     def capturar_texto(self):
         regular = self.page.query_selector('//*[@id="mainForm"]/div[1]/div/span')
@@ -1026,11 +1026,11 @@ class CoreLib(object):
             self.data['regular'] = False
         self.data['regularidade'] = texto
         write_results(json.dumps(self.data, ensure_ascii=False))
-    
+
     @keyword('Selecionar')
     def selecionar(self, element: str, value: str):
         self.page.select_option(element, value)
-    
+
     @keyword('Honduras')
     def honduras(self):
         self.data = {
@@ -1112,7 +1112,7 @@ class CoreLib(object):
             self.data['evidence'] = self.take_evidence()
             self.data['alertas'] = 0
         write_results(json.dumps(self.data, ensure_ascii=False))
-    
+
     @keyword('Resolver captcha imagem')
     def resolver_captcha_imagem(self,selector: str, input: str, click:str, check: str, retry: int = 0):
         console('Resolvendo captcha Imagem')
@@ -1238,26 +1238,24 @@ class CoreLib(object):
                 msg = self.page.inner_text(selector_cert_positiva)
             elif(elem_doc_not_found):
                 msg = self.page.inner_text(selector_doc_not_found)
-            
+
             console(f'msg: {msg}')
 
-            if (msg == 'CERTIFICAMOS, na forma da lei, que, consultando os sistemas processuais abaixo indicados, NÃO CONSTAM, até a presente data, PROCESSOS de classes CÍVEIS em tramitação contra:'):
+            if (
+                msg == 'CERTIFICAMOS, na forma da lei, que, consultando os sistemas processuais abaixo indicados, NÃO CONSTAM, até a presente data, PROCESSOS de classes CÍVEIS em tramitação contra:' or
+                msg == 'CERTIFICAMOS, na forma da lei, que, consultando os sistemas processuais abaixo indicados, NÃO CONSTAM, até a presente data e hora, PROCESSOS com com potencial de gerar inelegibilidade contra:' or
+                msg == 'CERTIFICAMOS, na forma da lei, que, consultando os sistemas processuais abaixo indicados, NÃO CONSTAM, até a presente data e hora, PROCESSOS de classes CRIMINAIS contra:'
+            ):
                 console('Passou pelo captcha corretamente')
             elif (msg == 'Essa certidão não pôde ser emitida de forma automática.'):
                 console('Passou pelo captcha corretamente gerando alerta')
             elif (msg == 'CNPJ não encontrado'):
                 console('Passou pelo captcha corretamente gerando alerta')
             else:
-                console('Resultado inesperado')
-                console("quebra recaptcha falhou, erro: " + solver.error_code)
-                self.data['found'] = False
-                self.data['captchaError'] = 'Resultado inesperado'
-                write_results(json.dumps(self.data, ensure_ascii=False))
+                raise Exception('Falha ao resolver o captcha, erro inesperado.')
         else:
             console("quebra recaptcha falhou, erro: " + solver.error_code)
-            self.data['found'] = False
-            self.data['captchaError'] = solver.error_code
-            write_results(json.dumps(self.data, ensure_ascii=False))
+            raise Exception('Erro na comunicação com o fornecedor de solução de captcha')
 
     @keyword('Processar TRF2')
     def trf2(self):
@@ -1272,6 +1270,7 @@ class CoreLib(object):
             self.data['evidence'] = self.take_evidence()
             self.data['result'] = None
             self.data['alertas'] = 1
+        write_results(json.dumps(self.data, ensure_ascii=False))
 
     @keyword('Bacen')
     def bacen(self):
@@ -1288,7 +1287,7 @@ class CoreLib(object):
             self.data['alertas'] = 1
 
         write_results(json.dumps(self.data, ensure_ascii=False))
-    
+
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
