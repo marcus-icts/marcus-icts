@@ -23,30 +23,6 @@ class CoreLib(object):
     de alguma keyword específica para o site em questão. Abaixo estarão descrita as
     palavras chaves (bem como seu funcionamento e parâmetros) que a biblioteca fornece.
     '''
-
-    @keyword('Abrir o navegador em')
-    def open_browser(self, url: str, headless: bool = True, slow_mo: float = None):
-        '''
-        Inicializa o serviço do playwright, executa o navegador (firefox) e abre uma página na URL especificada.
-
-        Parâmetros:
-          - `url`: endereço o qual o navegador deverá acessar
-          - `headless`: boleando para configurar se o navegador irá executar em modo headless ou headful
-          - `slow_mo`: tempo (em milisegundos) em que o `Playwright` deverá esperar entre suas ações - útil para debug
-
-        Exemplos:
-        | Abrir o navegador em | www.google.com |
-        | Abrir o navegador em | www.google.com | False |
-        | Abrir o navegador em | www.google.com | False | 3000 |
-        '''
-        self.playwright = sync_playwright().start()
-        self.browser = self.playwright.firefox.launch(
-            headless=headless, slow_mo=slow_mo)
-        self.context = self.browser.new_context()
-        self.page = self.context.new_page()
-        self.page.goto(url, timeout=180000)
-        self.data = {}
-
     @keyword('Abrir o navegador em')
     def open_browser(self, url: str, headless: bool = True, slow_mo: float = None, navegador: str = 'firefox'):
         '''
@@ -1144,33 +1120,6 @@ class CoreLib(object):
             self.data['captchaError'] = solver.error_code
             write_results(json.dumps(self.data, ensure_ascii=False))
             print("task finished with error "+solver.error_code)
-    @keyword('Resolver Download TRF5')
-    def download_trf5(self):
-        self.wait_sleep(10)
-        check_ok = self.page.query_selector('//*[@id="form:j_idt151"]')
-        if check_ok != None:
-            self.page.query_selector('//*[@id="form:j_idt151"]').click()
-            with self.page.expect_download() as download_info:
-                self.page.query_selector('#form\:panelBotoes > a.estilocomand').click()
-            download = download_info.value
-            console(download.path())
-            data = open(download.path(), "rb").read()
-            evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
-            console(evidence_b64)
-            self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
-            console(self.data)
-    @keyword('Resolver Download TRF5 Eleitoral')
-    def download_trf5te(self):
-        self.wait_sleep(10)
-        with self.page.expect_download() as download_info:
-            self.page.query_selector('//*[@id="form:j_idt126"]/span"]').click()
-        download = download_info.value
-        console(download.path())
-        data = open(download.path(), "rb").read()
-        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
-        console(evidence_b64)
-        self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
-        console(self.data)
 
     @keyword('Resolver captcha imagem bacen')
     def resolver_captcha_imagem_bacen(self,selector: str, input: str, click:str, check: str, retry: int = 0):
@@ -1253,24 +1202,58 @@ class CoreLib(object):
 
             self.page.query_selector(click).click()
             try:
-                teste = self.page.query_selector('body > div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable > div.ui-dialog-titlebar.ui-widget-header.ui-corner-all.ui-helper-clearfix')
-                if teste != None :
-                    console('cheguei aqui')
+                teste = self.page.query_selector('//*[@id="form:dialogCertidaoDistribuicao1_content"]')
+                if teste.is_visible() :
+                    console('captcha funcionou')
             except Exception as e:
                 console('Tentando novamente, deu erro de tempo ou captcha errado')
                 console(str(e))
                 if retry < 3:
-                    self.resolver_captcha_imagem(retry+1)
+                    self.resolver_captcha_imagem_trf(selector, input, click, retry+1)
                 else:
                     console('Finalizando após 4 tentativas')
                     self.data['found'] = False
-                    self.data['error'] = '4 Tentativas de resolver captcha e não conseguiu, pode ser por tempo ou texto errado'
-                    write_results(json.dumps(self.data, ensure_ascii=False))
+                    raise Exception('Erro após 4 tentativas de resolver o captcha')
         else:
-            self.data['found'] = False
-            self.data['captchaError'] = solver.error_code
+            raise Exception('Erro na comunicação com o fornecedor de resolver captcha')
+
+    @keyword('Resolver Download TRF5')
+    def download_trf5(self):
+        self.wait_sleep(15)
+        check_process = self.page.query_selector('//*[@id="form:j_idt165"]')
+        console(check_process.is_visible())
+        check_ok = self.page.query_selector('//*[@id="form:j_idt151"]')
+        # process.env.DEBUG = 'pw:api,pw:browser*'
+        if check_process.is_visible():
+            console('tem processo')
+            self.data['alertas'] = 1
+            self.data['result'] = self.page.query_selector('//*[@id="form:labelTipoRetorno3"]').inner_text()
+            self.wait_sleep(5)
+            with self.page.expect_download() as download_info:
+                self.page.query_selector('//*[@id="form:j_idt165"]').click()
+            download = download_info.value
+            console(download.path())
+            data = open(download.path(), "rb").read()
+            evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+            console(evidence_b64)
+            self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+            console(self.data)
             write_results(json.dumps(self.data, ensure_ascii=False))
-            print("task finished with error "+solver.error_code)
+        elif check_ok.is_visible():
+            self.data['alertas'] = 0
+            self.wait_sleep(5)
+            with self.page.expect_download() as download_info:
+                self.page.query_selector('//*[@id="form:j_idt151"]').click()
+            download = download_info.value
+            console(download.path())
+            data = open(download.path(), "rb").read()
+            evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+            console(evidence_b64)
+            self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+            console(self.data)
+            write_results(json.dumps(self.data, ensure_ascii=False))
+        else :
+            raise Exception('resultado fora do esperado')
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
