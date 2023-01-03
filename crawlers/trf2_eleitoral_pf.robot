@@ -27,6 +27,4 @@ Buscar em TRF2 Eleitoral PF
     Esperar                                                 3
     Resolver imagem recaptchaV2                             ${URL_TRF2}     ${WEBSITE_KEY}
     Esperar                                                 3
-    Processar TRF2
-    Esperar                                                 30
     [Teardown]  Fechar navegador e parar playwright

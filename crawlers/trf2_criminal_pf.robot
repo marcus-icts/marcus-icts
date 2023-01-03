@@ -5,7 +5,7 @@ Library  ../core/robot-libs/CoreLib.py
 *** Variables ***
 ${URL_TRF2}                                 https://certidoes.trf2.jus.br/certidoes/#/principal/solicitar
 ${TIPO_CERTIDAO}                            //*[@id="router-view-principal"]/div/div/div/div[2]/div[1]
-${OPCAO_JUDICIAL_CRIMINAL}                  //html/body/div[3]/div/ul/li[2]/button
+${OPCAO_JUDICIAL_CRIMINAL}                  //html/body/div[3]/div/ul/li[3]/button
 ${CAMPO_CPF_CNPJ}                           //*[@id="identificacao"]
 ${EMITIR_CERTIDAO}                          //*[@id="router-view-principal"]/div/div/div/div[4]/div[2]/button/div
 ${TEXT_AREA_CAPTCHA_RESPONSE}               //*[@id="g-recaptcha-response"]
@@ -27,6 +27,4 @@ Buscar em TRF2 Criminal Pf
     Esperar                                                 3
     Resolver imagem recaptchaV2                             ${URL_TRF2}     ${WEBSITE_KEY}
     Esperar                                                 3
-    Processar TRF2
-    Esperar                                                 30
     [Teardown]  Fechar navegador e parar playwright

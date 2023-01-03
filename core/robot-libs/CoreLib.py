@@ -1247,29 +1247,23 @@ class CoreLib(object):
                 msg == 'CERTIFICAMOS, na forma da lei, que, consultando os sistemas processuais abaixo indicados, NÃO CONSTAM, até a presente data e hora, PROCESSOS de classes CRIMINAIS contra:'
             ):
                 console('Passou pelo captcha corretamente')
+                self.data['found'] = True
+                self.data['evidence'] = self.take_evidence()
+                self.data['alertas'] = 0
             elif (msg == 'Essa certidão não pôde ser emitida de forma automática.'):
                 console('Passou pelo captcha corretamente gerando alerta')
+                self.data['found'] = True
+                self.data['evidence'] = self.take_evidence()
+                self.data['alertas'] = 1
             elif (msg == 'CNPJ não encontrado'):
                 console('Passou pelo captcha corretamente gerando alerta')
+                self.data['alertas'] = 0
             else:
                 raise Exception('Falha ao resolver o captcha, erro inesperado.')
         else:
             console("quebra recaptcha falhou, erro: " + solver.error_code)
-            raise Exception('Erro na comunicação com o fornecedor de solução de captcha')
+            raise Exception('Erro na comunicação com o fornecedor de solução de captcha. ' + solver.error_code)
 
-    @keyword('Processar TRF2')
-    def trf2(self):
-        self.data['found'] = True
-        check_class = self.page.query_selector('#app > div > div:nth-child(2) > div > div.folha-a4 > div > div > table > tbody > tr > td > p:nth-child(5)')
-        console(check_class)
-        if check_class != None:
-            self.data['evidence'] = self.take_evidence()
-            self.data['result'] = self.page.query_selector('#app > div > div:nth-child(2) > div > div.folha-a4 > div > div > table > tbody > tr > td > p:nth-child(5)').inner_text()
-            self.data['alertas'] = 0
-        else :
-            self.data['evidence'] = self.take_evidence()
-            self.data['result'] = None
-            self.data['alertas'] = 1
         write_results(json.dumps(self.data, ensure_ascii=False))
 
     @keyword('Bacen')
