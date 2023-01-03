@@ -1252,6 +1252,7 @@ class CoreLib(object):
     @keyword('Resolver Download TRF5')
     def download_trf5(self):
         self.wait_sleep(15)
+        self.data['found'] = True
         check_process = self.page.query_selector('//*[@id="form:j_idt165"]')
         console(check_process.is_visible())
         check_ok = self.page.query_selector('//*[@id="form:j_idt151"]')
