@@ -4,7 +4,7 @@ Library  ../core/robot-libs/CoreLib.py
 
 *** Tasks ***
 Buscar em TRF5 partes PJ
-    Abrir o navegador em                       https://certidoes.trf5.jus.br/certidoes2022/paginas/certidaodistribuicaoparte.faces  false   4000
+    Abrir o navegador em                       https://certidoes.trf5.jus.br/certidoes2022/paginas/certidaodistribuicaoparte.faces  true   4000
     Selecionar                                  //*[@id="form:orgaoInternet"]  1
     Digitar texto em campo                          ${cnpj}    //*[@id="form:cpfCnpj"]
     Clicar em                                   //*[@id="form:padPanel_content"]
