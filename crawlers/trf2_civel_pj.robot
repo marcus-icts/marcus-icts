@@ -21,12 +21,10 @@ Buscar em TRF2 Civel PJ
     Esperar                                                 1
     Clicar em                                               ${OPCAO_JUDICIAL_CIVIL}
     Esperar                                                 1
-    Digitar Texto Em Campo                                  ${cpf}  ${CAMPO_CPF_CNPJ}
+    Digitar Texto Em Campo                                  ${cnpj}  ${CAMPO_CPF_CNPJ}
     Esperar                                                 1
     Clicar em                                               ${EMITIR_CERTIDAO}
     Esperar                                                 3
     Resolver imagem recaptchaV2                             ${URL_TRF2}     ${WEBSITE_KEY}
     Esperar                                                 3
-    Processar TRF2
-    Esperar                                                 30
     [Teardown]  Fechar navegador e parar playwright
