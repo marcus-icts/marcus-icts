@@ -14,7 +14,7 @@ ${WEBSITE_KEY}                          6LdHlgshAAAAAGGaHJXAN3sOwdDxVPqazHx9TgRx
 
 
 *** Tasks ***
-Buscar em TRF2 Civel PJ
+Buscar em TRF2 Civel PF
     Abrir o navegador em                                    ${URL_TRF2}            false
     Esperar                                                 2
     Clicar em                                               ${TIPO_CERTIDAO}
