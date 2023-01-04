@@ -1223,9 +1223,14 @@ class CoreLib(object):
             elem_cert_negativa = self.page.is_visible(selector_cert_negativa)
             # console(f'neg: {elem_cert_negativa}')
 
+            console("aqui")
             selector_cert_positiva = "#app > div > div:nth-child(2) > form > div > div > div > div.md-card-content > div:nth-child(1) > p:nth-child(1)"
             elem_cert_positiva = self.page.is_visible(selector_cert_positiva)
             # console(f'pos: {elem_cert_positiva}')
+            console("ali")
+
+            selector_cert_positiva_new = '//*[@id="app"]/div/div[2]/div/div[2]/div/div/div[2]/div/div[2]' #foi encontrado inicialmente para civel pj
+            elem_cert_positiva_new = self.page.is_visible(selector_cert_positiva_new)
 
             selector_doc_not_found = "body > div.md-dialog > div > div.md-dialog-content.md-theme-default"
             elem_doc_not_found = self.page.is_visible(selector_doc_not_found)
@@ -1235,7 +1240,10 @@ class CoreLib(object):
             if (elem_cert_negativa):
                 msg = self.page.inner_text(selector_cert_negativa)
             elif(elem_cert_positiva):
+                console('entrou aqui')
                 msg = self.page.inner_text(selector_cert_positiva)
+            elif(elem_cert_positiva_new):
+                msg = self.page.inner_text(selector_cert_positiva_new)
             elif(elem_doc_not_found):
                 msg = self.page.inner_text(selector_doc_not_found)
 
@@ -1250,7 +1258,7 @@ class CoreLib(object):
                 self.data['found'] = True
                 self.data['evidence'] = self.take_evidence()
                 self.data['alertas'] = 0
-            elif (msg == 'Essa certidão não pôde ser emitida de forma automática.'):
+            elif (msg == 'Essa certidão não pôde ser emitida de forma automática.' or msg == 'Esta certidão não poderá ser requerida pela internet. Será necessário enviar requerimento fundamentado para seipr@jfrj.jus.br (SJRJ) ou naj@jfes.jus.br (SJES).'):
                 console('Passou pelo captcha corretamente gerando alerta')
                 self.data['found'] = True
                 self.data['evidence'] = self.take_evidence()
