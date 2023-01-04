@@ -15,7 +15,7 @@ ${WEBSITE_KEY}                          6LdHlgshAAAAAGGaHJXAN3sOwdDxVPqazHx9TgRx
 
 *** Tasks ***
 Buscar em TRF2 Civel PJ
-    Abrir o navegador em                                    ${URL_TRF2}            false
+    Abrir o navegador em                                    ${URL_TRF2}            
     Esperar                                                 2
     Clicar em                                               ${TIPO_CERTIDAO}
     Esperar                                                 1
