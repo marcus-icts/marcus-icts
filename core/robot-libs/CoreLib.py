@@ -12,6 +12,7 @@ from robot.api.logger import console
 from utils import write_results
 from dataUriCaptcha import dataUriCaptcha
 from core.env import env
+from anticaptchaofficial.recaptchav2proxyless import *
 import re
 @library(scope='GLOBAL', version='0.0.1')
 class CoreLib(object):
@@ -977,6 +978,7 @@ class CoreLib(object):
             self.data['captchaError'] = solver.error_code
             write_results(json.dumps(self.data, ensure_ascii=False))
             print("task finished with error "+solver.error_code)
+
     @keyword('Capturar Texto FGTS')
     def capturar_texto(self):
         regular = self.page.query_selector('//*[@id="mainForm"]/div[1]/div/span')
@@ -1000,9 +1002,11 @@ class CoreLib(object):
             self.data['regular'] = False
         self.data['regularidade'] = texto
         write_results(json.dumps(self.data, ensure_ascii=False))
+
     @keyword('Selecionar')
     def selecionar(self, element: str, value: str):
         self.page.select_option(element, value)
+
     @keyword('Honduras')
     def honduras(self):
         self.data = {
@@ -1166,6 +1170,84 @@ class CoreLib(object):
             self.data['captchaError'] = solver.error_code
             write_results(json.dumps(self.data, ensure_ascii=False))
             print("task finished with error "+solver.error_code)
+
+    @keyword('Resolver imagem recaptchaV2')
+    def recaptchaV2(self, site_url: str, website_key: str, retry: int = 0):
+        solver = recaptchaV2Proxyless()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        solver.set_website_url(site_url)
+        solver.set_website_key(website_key)
+        g_response = solver.solve_and_return_solution() #resposta do captcha
+        if g_response != 0:
+            console("Inserindo resposta do captcha no textArea...")
+            self.page.eval_on_selector('.grecaptcha-badge', "(el) => el.removeAttribute('style')")
+            self.page.eval_on_selector('#g-recaptcha-response', "(el) => el.removeAttribute('style')")
+
+            console("Validando resposta do captcha...")
+            self.page.fill('#g-recaptcha-response', g_response)
+            self.page.evaluate(f"window.recaptchaV2CallbackSucessoValidacao(['{g_response}'])")
+
+            console('Limpando tela para obter somente a informação necessária...')
+            self.page.evaluate('Array.from(document.querySelectorAll("body > div:not(#app, #recaptcha-v2)")).forEach((e) => e.remove())')
+
+            self.wait_sleep(15)
+            console('Analisando resultado...')
+            selector_cert_negativa = "#app > div > div:nth-child(2) > div > div.folha-a4 > div > div > table > tbody > tr > td > p:nth-child(5) > span"
+            elem_cert_negativa = self.page.is_visible(selector_cert_negativa)
+            # console(f'neg: {elem_cert_negativa}')
+
+            console("aqui")
+            selector_cert_positiva = "#app > div > div:nth-child(2) > form > div > div > div > div.md-card-content > div:nth-child(1) > p:nth-child(1)"
+            elem_cert_positiva = self.page.is_visible(selector_cert_positiva)
+            # console(f'pos: {elem_cert_positiva}')
+            console("ali")
+
+            selector_cert_positiva_new = '//*[@id="app"]/div/div[2]/div/div[2]/div/div/div[2]/div/div[2]' #foi encontrado inicialmente para civel pj
+            elem_cert_positiva_new = self.page.is_visible(selector_cert_positiva_new)
+
+            selector_doc_not_found = "body > div.md-dialog > div > div.md-dialog-content.md-theme-default"
+            elem_doc_not_found = self.page.is_visible(selector_doc_not_found)
+            # console(f'nf: {elem_doc_not_found}')
+
+            msg = ''
+            if (elem_cert_negativa):
+                msg = self.page.inner_text(selector_cert_negativa)
+            elif(elem_cert_positiva):
+                console('entrou aqui')
+                msg = self.page.inner_text(selector_cert_positiva)
+            elif(elem_cert_positiva_new):
+                msg = self.page.inner_text(selector_cert_positiva_new)
+            elif(elem_doc_not_found):
+                msg = self.page.inner_text(selector_doc_not_found)
+
+            console(f'msg: {msg}')
+
+            if (
+                msg == 'CERTIFICAMOS, na forma da lei, que, consultando os sistemas processuais abaixo indicados, NÃO CONSTAM, até a presente data, PROCESSOS de classes CÍVEIS em tramitação contra:' or
+                msg == 'CERTIFICAMOS, na forma da lei, que, consultando os sistemas processuais abaixo indicados, NÃO CONSTAM, até a presente data e hora, PROCESSOS com com potencial de gerar inelegibilidade contra:' or
+                msg == 'CERTIFICAMOS, na forma da lei, que, consultando os sistemas processuais abaixo indicados, NÃO CONSTAM, até a presente data e hora, PROCESSOS de classes CRIMINAIS contra:'
+            ):
+                console('Passou pelo captcha corretamente')
+                self.data['found'] = True
+                self.data['evidence'] = self.take_evidence()
+                self.data['alertas'] = 0
+            elif (msg == 'Essa certidão não pôde ser emitida de forma automática.' or msg == 'Esta certidão não poderá ser requerida pela internet. Será necessário enviar requerimento fundamentado para seipr@jfrj.jus.br (SJRJ) ou naj@jfes.jus.br (SJES).'):
+                console('Passou pelo captcha corretamente gerando alerta')
+                self.data['found'] = True
+                self.data['evidence'] = self.take_evidence()
+                self.data['alertas'] = 1
+            elif (msg == 'CNPJ não encontrado'):
+                console('Passou pelo captcha corretamente gerando alerta')
+                self.data['alertas'] = 0
+            else:
+                raise Exception('Falha ao resolver o captcha, erro inesperado.')
+        else:
+            console("quebra recaptcha falhou, erro: " + solver.error_code)
+            raise Exception('Erro na comunicação com o fornecedor de solução de captcha. ' + solver.error_code)
+
+        write_results(json.dumps(self.data, ensure_ascii=False))
+
     @keyword('Bacen')
     def bacen(self):
         self.data['found'] = True
