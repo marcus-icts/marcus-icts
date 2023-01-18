@@ -1366,6 +1366,50 @@ class CoreLib(object):
             write_results(json.dumps(self.data, ensure_ascii=False))
         else :
             raise Exception('resultado fora do esperado')
+
+    @keyword('RecaptchaV2 TRF3')
+    def recaptchaV2_trf3(self, site_url: str, website_key: str, retry: int = 0):
+        solver = recaptchaV2Proxyless()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        solver.set_website_url(site_url)
+        solver.set_website_key(website_key)
+        g_response = solver.solve_and_return_solution() #resposta do captcha
+        if g_response != 0:
+            console("Inserindo resposta do captcha no textArea...")
+            self.page.eval_on_selector('#g-recaptcha-response', '(el) => el.value =' +"'"+ g_response +"'")
+
+            self.wait_sleep(10)
+            self.page.query_selector('//*[@id="submit"]').click()
+            BuiltIn().sleep('15000ms')
+            console('Analisando resultado...')
+            check_certidao = self.page.query_selector('//*[@id="ContainerImpressaoCertidao"]')
+            if check_certidao != None:
+                self.data['found'] = True
+                check_processo = self.page.query_selector_all('//*[@class="registro-processo"]')
+                console(check_processo)
+                if not check_processo :
+                    self.data['evidence'] = self.take_evidence()
+                    self.data['alertas'] = 0
+                else :
+                    self.data['evidence'] = self.take_evidence()
+                    self.data['alertas'] = 1
+            else :
+                console('Tentando novamente, deu erro de tempo ou recaptcha errado')
+                if retry < 3:
+                    self.recaptchaV2_trf3(site_url, website_key, retry+1)
+                else:
+                    console('Finalizando após 4 tentativas')
+                    raise Exception('Erro após 4 tentativas')
+
+
+            # else:
+            #     raise Exception('Falha ao resolver o captcha, erro inesperado.')        else:
+        else :
+            console("quebra recaptcha falhou, erro: " + solver.error_code)
+            raise Exception('Erro na comunicação com o fornecedor de solução de captcha. ' + solver.error_code)
+
+        write_results(json.dumps(self.data, ensure_ascii=False))
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
