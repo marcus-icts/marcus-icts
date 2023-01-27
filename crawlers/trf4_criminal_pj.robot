@@ -17,5 +17,5 @@ Buscar em TRF4 Criminal Pj
     Esperar                                                 3
     Clicar em                                               ${TIPO_CERTIDAO}
     Esperar                                                 3
-    RecaptchaV2 TRF4                                        ${URL_TRF}     ${WEBSITE_KEY}   ${cpf}  ${CAMPO_DOCUMENTO}  ${TIPO_CERTIDAO}
+    RecaptchaV2 TRF4                                        ${URL_TRF}     ${WEBSITE_KEY}   ${cnpj}  ${CAMPO_DOCUMENTO}  ${TIPO_CERTIDAO}
     [Teardown]  Fechar navegador e parar playwright
