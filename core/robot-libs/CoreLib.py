@@ -1438,6 +1438,9 @@ class CoreLib(object):
                     or self.page.query_selector(str_check).inner_text() == 'ATENÇÃO: NÃO FOI POSSÍVEL EMITIR A CERTIDÃO JUDICIAL CRIMINAL'
                     or self.page.query_selector(str_check).inner_text() == 'ATENÇÃO: NÃO FOI POSSÍVEL EMITIR A CERTIDÃO JUDICIAL PARA FINS ELEITORAIS'
                 ):
+                    data = self.page.query_selector('//*[@id="divDetalhesPoliticaPrivacidade"]')
+                    if data != None :
+                        self.page.evaluate('document.querySelector("#divDetalhesPoliticaPrivacidade").remove()')
                     self.data['evidence'] = self.take_evidence()
                     self.data['alertas'] = 1
                 else :
