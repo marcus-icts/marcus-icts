@@ -1312,6 +1312,7 @@ class CoreLib(object):
             self.page.fill(input, captcha_text)
 
             self.page.query_selector(click).click()
+            self.wait_sleep(30)
             try:
                 teste = self.page.query_selector('//*[@id="form:dialogCertidaoDistribuicao1_content"]')
                 if teste.is_visible() :
@@ -1332,17 +1333,16 @@ class CoreLib(object):
     def download_trf5(self):
         self.wait_sleep(15)
         self.data['found'] = True
-        check_process = self.page.query_selector('//*[@id="form:j_idt165"]')
-        console(check_process.is_visible())
-        check_ok = self.page.query_selector('//*[@id="form:j_idt151"]')
+        check_process = self.page.query_selector('//*[@id="form:j_idt173"]')
+        check_ok = self.page.query_selector('//*[@id="form:j_idt159"]')
         # process.env.DEBUG = 'pw:api,pw:browser*'
         if check_process.is_visible():
             console('tem processo')
             self.data['alertas'] = 1
             self.data['result'] = self.page.query_selector('//*[@id="form:labelTipoRetorno3"]').inner_text()
-            self.wait_sleep(5)
+            self.wait_sleep(20)
             with self.page.expect_download() as download_info:
-                self.page.query_selector('//*[@id="form:j_idt165"]').click()
+                self.page.query_selector('//*[@id="form:j_idt173"]').click()
             download = download_info.value
             console(download.path())
             data = open(download.path(), "rb").read()
@@ -1353,9 +1353,9 @@ class CoreLib(object):
             write_results(json.dumps(self.data, ensure_ascii=False))
         elif check_ok.is_visible():
             self.data['alertas'] = 0
-            self.wait_sleep(5)
+            self.wait_sleep(20)
             with self.page.expect_download() as download_info:
-                self.page.query_selector('//*[@id="form:j_idt151"]').click()
+                self.page.query_selector('//*[@id="form:j_idt159"]').click()
             download = download_info.value
             console(download.path())
             data = open(download.path(), "rb").read()
