@@ -15,9 +15,7 @@ from core.env import env
 from anticaptchaofficial.recaptchav2proxyless import *
 import re
 import requests
-from PIL import Image
-import pytesseract
-from pdf2image import convert_from_path
+
 @library(scope='GLOBAL', version='0.0.1')
 class CoreLib(object):
     '''
