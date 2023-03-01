@@ -15,6 +15,9 @@ from core.env import env
 from anticaptchaofficial.recaptchav2proxyless import *
 import re
 import requests
+from PIL import Image
+import pytesseract
+from pdf2image import convert_from_path
 @library(scope='GLOBAL', version='0.0.1')
 class CoreLib(object):
     '''
@@ -1584,3 +1587,95 @@ class CoreLib(object):
             write_results(json.dumps(data, ensure_ascii=False))
         except Exception as e:
             raise Exception('resultado fora do esperado: Erro: ', e)
+
+    @keyword('crimes eleitorais')
+    def abrir_crimes_eleitorais_para_evidencia(self, nome: str, cpf: str, data_nascimento: str, nome_mae: str = '', nome_pai: str = ''):
+        try:
+            url = 'https://www.tse.jus.br/servicos-eleitorais/certidoes/certidao-de-crimes-eleitorais'
+            url_rest = 'https://www.tse.jus.br/@certidao-crimes'
+            campo_nome_eleitor = '//*[@id="CE_NomeEleitor"]'
+            campo_cpf = '//*[@id="CE_NumeroTituloCPF"]'
+            campo_data_nascimento = '//*[@id="CE_DataNascimento"]'
+            campo_nao_consta_mae = '//*[@id="CE_NaoConstaMae"]'
+            campo_nao_consta_pai = '//*[@id="CE_NaoConstaPai"]'
+            campo_mae = '//*[@id="CE_NomeMae"]'
+            campo_pai = '//*[@id="CE_NomePai"]'
+            campo_dados_incorretos = '//*[@id="ancora-1"]/div/div[1]'
+            texto_dados_incorretos = 'Os dados informados (nome, data de nascimento ou filiação) não conferem com aqueles constantes do Cadastro Eleitoral.'
+            btn_emitir = '//*[@id="form-crimes-eleitorais"]/fieldset/button'
+            nome_pai = nome_pai if nome_pai != '' else 'NAO CONSTA'
+            nome_mae = nome_mae if nome_mae != '' else 'NAO CONSTA'
+
+            body = {
+                'token':'03AFY_a8Xk9JUcRm6eavVbw9DAeiWz1UaTDFckDBFPxeLjKMVwThJOBKkQySNjzdDERS_1nZ-EMt2iOjTOic_aiyJvLc_SqSkdE3tjzQNi8MBXLDAlAZWQhR9W3blyXqNFHz3FS6fCe7tf_2SeqgyBb6DJyRTVRbYUc4z7AOFdbaxuLqqk0Cp51xdVD9NVtIfXv5ul26ouXgZe2MjBPtrEWqC8ICf_whQXS4oYOvBzMMoCvg48QGPFqQtbYh4LkIUVzi2X4IYUW5BMJcdxa4fkwV15Vt3SeOEzxYVcNaH-Id1FTdZIW-hMO2v4tX0gqPj45JWPW0T7rz4dV4yYxU88vjTlfSBZJny-TFGwjAVKC3ntPK66WdfUKd3CqyntpAvmWAUiwmQWXyIuyuFG57mhxCtQn_fOr9ag4mC308uVQrL_nw3WRgjyiikrlxsh28ZeLLPzQWHcYDuMpTW5zRKEeGXsP37F2DDPH6HhMTSZN5xnISRmrMlT_qIHRLFEdPoBpZ_PWQY_bvGi8hESXkt8Yh2QT2A15SVrmL2IAFjgAYgyDGctC_Rq2pb1n_Z7dq9i5GNJndIF2aPP_Gc84cSQ8EAMFZrb7IP_xc9v3DOOtu_ReH-9QB5RkkZ7mwD126QXs0DVIUIBkiQNdD5TwwH5D3LrpfK1x8-oTq02O2UBD-cOf0NrHcy92MUCwWqX0V1jywB7QOoqPOrPbGWExg4jrlLFIsVKU1sLS5Cu6SqqT6XR50juNNzqWetrVI7oARIwXHcsvI5cmFUh1WkNZkVbCCzumRpmMuit8Tq7YfT5-BaUM52TGCNTB3qS8AYilGbIQeg0P4_tVHFph-P1qAL9SnQy3CySQhVqJzmwRo75VX8ghwVhrhx7kEddmqsvzca-6OV_2dADNoh8uKQtEVBhDQZY9dm9Q76jTwBlWiTFqbUnIuLrUqzbPNA2vpYBFFZukAhu0C2ETvPTUoGzbt3LiXlAldG56-jZnMDp7EkN2Um1GbIS2rEoYRUXCGiR9t8stDky7-3SH6Xpjs4_ljgMgkBZlJHyT_b70dCdueTuT-K26co7dqLAzo5n7sW4fegvJ1RzCICCzhtWjXfUNFqR6im3pHRBA_u1dLBfhS9WEj_swe-L-R9PXgYQUKCuDGL3LzAAwgjj0vvoeVPyR5RQtS8T-NCiSbZRejV6ao08D2Iv6Kr9tZ2Dvs669PyM_HtJ3Rp40Z6C7aWeHU6IKW4Rdvhw1T8Ux0RvncDTVCJOPCwtr5q95xLdTamo5EQgrk9C3HiWaQZ5w3-lNy8pyG-21zJGqGj10zM-HjuOcVM0-cZQO8yqN80cmdS3prbBDTKW3tg-sn-Z44pyM6p8LXiW-zR0JZD_PTZX40eZVkPtYt4aqoKCbub5g4uQ7mnIh4OXF3PQ82T9Pehy',
+                'formid':'formcrimeseleitorais',
+                'nome': nome,
+                'dataNascimento': data_nascimento,
+                'nomeMae': nome_mae,
+                'nomePai': nome_pai,
+                'cpf': cpf
+            }  
+        
+            headers = {
+                "Accept": "application/json; charset=utf-8",
+                "Content-Type": "application/json; charset=utf-8"
+            }
+            
+            console('Enviando requisição...')
+            response = requests.post(url_rest, json= body, headers= headers)
+            console("response status code: " +  str(response.status_code)+"\n\n")
+
+            emitiu_certidao = True if response.status_code == 200 else False
+
+            self.open_browser(url, False)
+            self.wait_sleep(3)
+            self.input_text(nome, campo_nome_eleitor)
+            self.input_text(cpf, campo_cpf)
+            self.input_text(data_nascimento, campo_data_nascimento)
+            self.wait_sleep(3)
+
+            if nome_mae == 'NAO CONSTA':
+                console("Clicando no botão 'Não consta' para o nome da mãe")
+                self.click_at(campo_nao_consta_mae)
+            else:
+                console("Preenchendo o nome da mãe")
+                self.input_text(nome_mae, campo_mae)
+
+            if nome_pai == 'NAO CONSTA':
+                console("Clicando no botão 'Não consta' para o nome do pai")
+                self.click_at(campo_nao_consta_pai)
+            else:
+                console("Preenchendo o nome da mãe")
+                self.input_text(nome_pai, campo_pai)
+
+            console('Removendo modal lgpd')
+            self.page.evaluate("document.querySelector('#modal-lgpd').remove()")
+            self.wait_sleep(1)
+
+            if emitiu_certidao:
+                console('Esperando download da certidão')
+                with self.page.expect_download() as download_info:
+                    console("Clicando no botão de emitir")
+                    self.click_at(btn_emitir)
+                    self.wait_sleep(20)
+                download = download_info.value
+                data = open(download.path(), "rb").read()
+                evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+                console(evidence_b64)
+                self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+                self.data['found'] = True
+                self.data['evidence_type'] = 'pdf'            
+            else:
+                console('Certidão não emitida')
+                console("Clicando no botão de emitir")
+                self.click_at(btn_emitir)
+                self.wait_sleep(20)
+                self.data['evidence'] = self.take_evidence()
+                self.data['found'] = True
+                self.data['evidence_type'] = 'image'
+            
+            self.wait_sleep(10)
+            write_results(json.dumps(self.data, ensure_ascii=False))
+
+        except Exception as e:
+            raise Exception('resultado fora do esperado. erro: ', str(e))
