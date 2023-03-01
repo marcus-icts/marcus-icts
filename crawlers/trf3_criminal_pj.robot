@@ -5,7 +5,7 @@ Library  ../core/robot-libs/CoreLib.py
 *** Variables ***
 ${URL_TRF3}                                 https://web.trf3.jus.br/certidao-regional/CertidaoCivelEleitoralCriminal/SolicitarDadosCertidao
 ${CAMPO_TIPO_CERTIDAO}                      //*[@id="Tipo"]
-${TIPO_CERTIDAO}                            CIVEL
+${TIPO_CERTIDAO}                            CRIMINAL
 ${CAMPO_TIPO_DOCUMENTO}                     //*[@id="TipoDeDocumento"]
 ${TIPO_DOCUMENTO}                           CNPJ
 ${CAMPO_DOCUMENTO}                          //*[@id="Documento"]
@@ -16,7 +16,7 @@ ${WEBSITE_KEY}                              6Le_CtAZAAAAAEbTeETvetg4zQ7kJI0NH5HN
 
 
 *** Tasks ***
-Buscar em TRF3 Civel Pj
+Buscar em TRF3 Criminal Pj
     Abrir o navegador em                                    ${URL_TRF3}
     Esperar                                                 2
     Selecionar                                              ${CAMPO_TIPO_CERTIDAO}  ${TIPO_CERTIDAO}
