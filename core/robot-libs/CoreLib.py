@@ -1625,7 +1625,7 @@ class CoreLib(object):
 
             emitiu_certidao = True if response.status_code == 200 else False
 
-            self.open_browser(url, False)
+            self.open_browser(url)
             self.wait_sleep(3)
             self.input_text(nome, campo_nome_eleitor)
             self.input_text(cpf, campo_cpf)
