@@ -1031,6 +1031,7 @@ class CoreLib(object):
             self.data['found'] = False
             self.data['error'] = 'Resultado não encontrado'
         write_results(json.dumps(self.data, ensure_ascii=False))
+
     @keyword('Extrair span TCU')
     def extrairTcu(self):
         self.data = {
@@ -1171,6 +1172,26 @@ class CoreLib(object):
             self.data['captchaError'] = solver.error_code
             write_results(json.dumps(self.data, ensure_ascii=False))
             print("task finished with error "+solver.error_code)
+
+    @keyword('Resolver TCU recaptchaV2')
+    def solve_tcu_recaptcha_v2(self, site_url: str, website_key: str):
+        self.fill_recaptcha_v2(site_url, website_key)
+        console("Validando resposta do captcha...")
+        self.page.evaluate(f"window.recaptchaCallback()")
+        console(self.page.evaluate(f"window.validaCaptcha()"))
+
+    def fill_recaptcha_v2(self, site_url: str, website_key: str):
+        solver = recaptchaV2Proxyless()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        solver.set_website_url(site_url)
+        solver.set_website_key(website_key)
+        g_response = solver.solve_and_return_solution() #resposta do captcha
+        console(g_response)
+        if g_response != 0:
+            console("Inserindo resposta do captcha no textArea...")
+            self.page.eval_on_selector('#g-recaptcha-response', "(el) => el.removeAttribute('style')")
+            self.page.fill('#g-recaptcha-response', g_response)
 
     @keyword('Resolver imagem recaptchaV2')
     def recaptchaV2(self, site_url: str, website_key: str, retry: int = 0):
@@ -1525,7 +1546,7 @@ class CoreLib(object):
             # elem_error = self.page.query_selector("#ancora-1 > div > div.portalMessage.alert-message.error")
         except:
             raise Exception('resultado fora do esperado')
-       
+
     @keyword('quitacao eleitoral')
     def checar_quitacao_eleitoral(self, nome: str, cpf: str, data_nascimento: str, nome_mae: str = '', nome_pai: str = ''):
         try:
@@ -1537,7 +1558,7 @@ class CoreLib(object):
             data = {}
             textNaoQuite = "abaixo qualificado(a) não está quite"
             textQuite = "abaixo qualificado(a) está QUITE"
-        
+
             url = 'https://www.tse.jus.br/@certidao-quitacao'
             body = {
                 'token':'03AFY_a8Xk9JUcRm6eavVbw9DAeiWz1UaTDFckDBFPxeLjKMVwThJOBKkQySNjzdDERS_1nZ-EMt2iOjTOic_aiyJvLc_SqSkdE3tjzQNi8MBXLDAlAZWQhR9W3blyXqNFHz3FS6fCe7tf_2SeqgyBb6DJyRTVRbYUc4z7AOFdbaxuLqqk0Cp51xdVD9NVtIfXv5ul26ouXgZe2MjBPtrEWqC8ICf_whQXS4oYOvBzMMoCvg48QGPFqQtbYh4LkIUVzi2X4IYUW5BMJcdxa4fkwV15Vt3SeOEzxYVcNaH-Id1FTdZIW-hMO2v4tX0gqPj45JWPW0T7rz4dV4yYxU88vjTlfSBZJny-TFGwjAVKC3ntPK66WdfUKd3CqyntpAvmWAUiwmQWXyIuyuFG57mhxCtQn_fOr9ag4mC308uVQrL_nw3WRgjyiikrlxsh28ZeLLPzQWHcYDuMpTW5zRKEeGXsP37F2DDPH6HhMTSZN5xnISRmrMlT_qIHRLFEdPoBpZ_PWQY_bvGi8hESXkt8Yh2QT2A15SVrmL2IAFjgAYgyDGctC_Rq2pb1n_Z7dq9i5GNJndIF2aPP_Gc84cSQ8EAMFZrb7IP_xc9v3DOOtu_ReH-9QB5RkkZ7mwD126QXs0DVIUIBkiQNdD5TwwH5D3LrpfK1x8-oTq02O2UBD-cOf0NrHcy92MUCwWqX0V1jywB7QOoqPOrPbGWExg4jrlLFIsVKU1sLS5Cu6SqqT6XR50juNNzqWetrVI7oARIwXHcsvI5cmFUh1WkNZkVbCCzumRpmMuit8Tq7YfT5-BaUM52TGCNTB3qS8AYilGbIQeg0P4_tVHFph-P1qAL9SnQy3CySQhVqJzmwRo75VX8ghwVhrhx7kEddmqsvzca-6OV_2dADNoh8uKQtEVBhDQZY9dm9Q76jTwBlWiTFqbUnIuLrUqzbPNA2vpYBFFZukAhu0C2ETvPTUoGzbt3LiXlAldG56-jZnMDp7EkN2Um1GbIS2rEoYRUXCGiR9t8stDky7-3SH6Xpjs4_ljgMgkBZlJHyT_b70dCdueTuT-K26co7dqLAzo5n7sW4fegvJ1RzCICCzhtWjXfUNFqR6im3pHRBA_u1dLBfhS9WEj_swe-L-R9PXgYQUKCuDGL3LzAAwgjj0vvoeVPyR5RQtS8T-NCiSbZRejV6ao08D2Iv6Kr9tZ2Dvs669PyM_HtJ3Rp40Z6C7aWeHU6IKW4Rdvhw1T8Ux0RvncDTVCJOPCwtr5q95xLdTamo5EQgrk9C3HiWaQZ5w3-lNy8pyG-21zJGqGj10zM-HjuOcVM0-cZQO8yqN80cmdS3prbBDTKW3tg-sn-Z44pyM6p8LXiW-zR0JZD_PTZX40eZVkPtYt4aqoKCbub5g4uQ7mnIh4OXF3PQ82T9Pehy',
@@ -1548,13 +1569,13 @@ class CoreLib(object):
                 'nomePai': nome_pai,
                 'cpf': cpf
             }
-            
+
             # console("data: " +str(data) +"\n\n")
             headers = {
                 "Accept": "application/json; charset=utf-8",
                 "Content-Type": "application/json; charset=utf-8"
             }
-            
+
             console('Enviando requisição...')
             response = requests.post(url, json= body, headers= headers)
             console("response status code: " +  str(response.status_code)+"\n\n")
