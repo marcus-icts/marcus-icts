@@ -12,7 +12,7 @@ ${PAGINACAO}                                   //*[@id="formularioVacioPublico:j
 Buscar em Compras Estatales
     Abrir o navegador em                                    ${URL_COMPRAS}  false
     Esperar                                                                 2
-    Digitar Texto Em Campo                                  ${nome}     ${CAMPO_NOME}
+    Digitar Texto Em Campo                                  ${razao_social}     ${CAMPO_NOME}
     Esperar                                                                 5
     Clicar em                                               ${ENVIAR}
     Esperar                                                                 10
