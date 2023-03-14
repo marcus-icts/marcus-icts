@@ -10,7 +10,7 @@ ${PAGINACAO}                                   //*[@id="formularioVacioPublico:j
 
 *** Tasks ***
 Buscar em Compras Estatales
-    Abrir o navegador em                                    ${URL_COMPRAS}  false
+    Abrir o navegador em                                    ${URL_COMPRAS}
     Esperar                                                                 2
     Digitar Texto Em Campo                                  ${razao_social}     ${CAMPO_NOME}
     Esperar                                                                 5

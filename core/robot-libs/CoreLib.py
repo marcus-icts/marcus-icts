@@ -1609,11 +1609,11 @@ class CoreLib(object):
                 denominacao_social = line.query_selector('td:nth-child(3)').inner_text()
                 domicilio_fiscal = line.query_selector('td:nth-child(4)').inner_text()
                 estado_do_provedor = line.query_selector('td:nth-child(5)').inner_text()
-                dados['Pais'] = pais
-                dados['Identificação'] = identificacao
-                dados['Denominacao Social'] = denominacao_social
-                dados['Domicílio Físcal'] = domicilio_fiscal
-                dados['Estado do Provedor'] = estado_do_provedor
+                dados['pais'] = pais
+                dados['identificacao'] = identificacao
+                dados['denominacao_social'] = denominacao_social
+                dados['domicílio_fiscal'] = domicilio_fiscal
+                dados['estado_provedor'] = estado_do_provedor
                 self.data['resultados'].append(dados)
             if len(self.data['resultados']) == 200:
                 console('Finalizando pois atingiu a quantidade máxima')
