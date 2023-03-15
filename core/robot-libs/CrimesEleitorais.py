@@ -21,7 +21,7 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
             nome_pai = nome_pai if nome_pai != '' else 'NAO CONSTA'
             nome_mae = nome_mae if nome_mae != '' else 'NAO CONSTA'
 
-            self.open_browser(url, False)
+            self.open_browser(url)
             self.wait_sleep(3)
             self.input_text(nome, campo_nome_eleitor)
             self.input_text(cpf, campo_cpf)
