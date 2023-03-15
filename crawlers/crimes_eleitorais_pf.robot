@@ -1,5 +1,5 @@
 *** Settings ***
-Library  ../core/robot-libs/CoreLib.py
+Library  ../core/robot-libs/CrimesEleitorais.py
 
 
 *** Variables ***
