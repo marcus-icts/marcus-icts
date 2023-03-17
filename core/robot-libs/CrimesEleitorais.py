@@ -21,7 +21,7 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
             nome_pai = nome_pai if nome_pai != '' else 'NAO CONSTA'
             nome_mae = nome_mae if nome_mae != '' else 'NAO CONSTA'
 
-            self.open_browser(url)
+            self.open_browser(url, False)
             self.wait_sleep(3)
             self.input_text(nome, campo_nome_eleitor)
             self.input_text(cpf, campo_cpf)
@@ -61,9 +61,10 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
             
             self.wait_sleep(2)
             write_results(json.dumps(self.data, ensure_ascii=False))
-
+            self.wait_sleep(2)
+            self.teardown()
         except Exception as e:
-            if (self.page.query_selector('//*[@id="ancora-1"]/div/div[1]') != None):
+            if (self.page.query_selector('//*[@id="ancora-1"]/div/div[1]') == None):
                 console('Certidão não emitida')
                 self.wait_sleep(1)
                 self.data['evidence'] = self.take_evidence()
@@ -71,5 +72,8 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
                 self.data['evidence_type'] = 'image'
                 self.wait_sleep(2)
                 write_results(json.dumps(self.data, ensure_ascii=False))
+                self.teardown()
             else:
+                self.teardown()
                 raise Exception('resultado fora do esperado. erro: ', str(e))
+            
