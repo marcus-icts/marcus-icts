@@ -1587,45 +1587,47 @@ class CoreLib(object):
     @keyword('Pegar dados da tabela Uruguai')
     def tabela_uruguai(self, paginacao: str):
         self.data['found'] = True
-        dados_brutos = self.page.query_selector(paginacao).inner_text()
-        dado_refinado = dados_brutos.split('/ ')
-        paginas = dado_refinado[1].split(' (')
-        selector = '.iceDatTblRow'
-        pagina_atual = 1
-        pagina_final = paginas[0].replace(",","")
-        console( pagina_final)
         self.data['resultados'] = []
-        pegar_conteudo = True
-        while pegar_conteudo:
-            BuiltIn().sleep('1500ms')
-            self.page.wait_for_selector(selector)
-            table_lines = self.page.query_selector_all(selector)
-            console("a pagina atual é ")
-            console(pagina_atual)
-            for line in table_lines:
-                dados = {}
-                pais = line.query_selector('td:nth-child(1)').inner_text()
-                identificacao = line.query_selector('td:nth-child(2)').inner_text()
-                denominacao_social = line.query_selector('td:nth-child(3)').inner_text()
-                domicilio_fiscal = line.query_selector('td:nth-child(4)').inner_text()
-                estado_do_provedor = line.query_selector('td:nth-child(5)').inner_text()
-                dados['pais'] = pais
-                dados['identificacao'] = identificacao
-                dados['denominacao_social'] = denominacao_social
-                dados['domicílio_fiscal'] = domicilio_fiscal
-                dados['estado_provedor'] = estado_do_provedor
-                self.data['resultados'].append(dados)
-            if len(self.data['resultados']) == 200:
-                console('Finalizando pois atingiu a quantidade máxima')
-                pegar_conteudo = False
-            else :
-                if pagina_atual != int(pagina_final):
-                    console('indo para proxima pagina')
-                    self.page.query_selector('//*[@id="formularioVacioPublico:paginadorBusqedaProveedorArribanext"]').click()
-                    BuiltIn().sleep('1500ms')
-                    pagina_atual += 1
-                else :
-                    console('Finalizando o loop de while pois chegamos na última p')
+        console(self.page.query_selector(paginacao))
+        if self.page.query_selector(paginacao) != None:
+            dados_brutos = self.page.query_selector(paginacao).inner_text()
+            dado_refinado = dados_brutos.split('/ ')
+            paginas = dado_refinado[1].split(' (')
+            selector = '.iceDatTblRow'
+            pagina_atual = 1
+            pagina_final = paginas[0].replace(",","")
+            console( pagina_final)
+            pegar_conteudo = True
+            while pegar_conteudo:
+                BuiltIn().sleep('1500ms')
+                self.page.wait_for_selector(selector)
+                table_lines = self.page.query_selector_all(selector)
+                console("a pagina atual é ")
+                console(pagina_atual)
+                for line in table_lines:
+                    dados = {}
+                    pais = line.query_selector('td:nth-child(1)').inner_text()
+                    identificacao = line.query_selector('td:nth-child(2)').inner_text()
+                    denominacao_social = line.query_selector('td:nth-child(3)').inner_text()
+                    domicilio_fiscal = line.query_selector('td:nth-child(4)').inner_text()
+                    estado_do_provedor = line.query_selector('td:nth-child(5)').inner_text()
+                    dados['pais'] = pais
+                    dados['identificacao'] = identificacao
+                    dados['denominacao_social'] = denominacao_social
+                    dados['domicílio_fiscal'] = domicilio_fiscal
+                    dados['estado_provedor'] = estado_do_provedor
+                    self.data['resultados'].append(dados)
+                if len(self.data['resultados']) == 200:
+                    console('Finalizando pois atingiu a quantidade máxima')
                     pegar_conteudo = False
+                else :
+                    if pagina_atual != int(pagina_final):
+                        console('indo para proxima pagina')
+                        self.page.query_selector('//*[@id="formularioVacioPublico:paginadorBusqedaProveedorArribanext"]').click()
+                        BuiltIn().sleep('1500ms')
+                        pagina_atual += 1
+                    else :
+                        console('Finalizando o loop de while pois chegamos na última p')
+                        pegar_conteudo = False
         self.data['alerta'] = len(self.data['resultados'])
         write_results(json.dumps(self.data, ensure_ascii=False))
