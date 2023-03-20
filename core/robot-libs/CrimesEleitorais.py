@@ -64,7 +64,7 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
             self.wait_sleep(2)
             self.teardown()
         except Exception as e:
-            if (self.page.query_selector('//*[@id="ancora-1"]/div/div[1]') == None):
+            if (self.page.query_selector('//*[@id="ancora-1"]/div/div[1]') != None):
                 console('Certidão não emitida')
                 self.wait_sleep(1)
                 self.data['evidence'] = self.take_evidence()
