@@ -1632,7 +1632,7 @@ class CoreLib(object):
         cpf_formatado = '{}.{}.{}-{}'.format(cpf[:3], cpf[3:6], cpf[6:9], cpf[9:])
         return cpf_formatado
     @keyword('Quitacao Participacao Eleitor')
-    def quitacao_participacao_eleitor(self, cpf, titulo, nome_titulo):
+    def quitacao_participacao_eleitor(self, cpf, titulo, nome_titulo,retry:int = 0):
         nome_tratado = nome_titulo.replace(' ', '+')
         console(nome_tratado)
         titulo_tratado = self.add_letter(titulo, "+")
@@ -1668,115 +1668,11 @@ class CoreLib(object):
                 historico.append(content)
             self.data['historico'] = historico
             console(self.data)
+            write_results(json.dumps(self.data, ensure_ascii=False))
         else :
-            raise Exception('resultado fora do esperado requisição retornou algo diferente de 200', response)
-        # self.wait_sleep(40)
-        # link_pdf = self.page.locator('//html/body/div/div[1]/participa-orgao-partidario/div/div[2]/form/div[6]/div/table/tbody/tr/td[4]/button')
-        # # with self.page.expect_event() as new_page_info:
-        # self.context.on('page', self.handler)
-        # link_pdf.click()
-        # self.wait_sleep(80)
-        # console("allala")
-        # console(self.page.url)
-        # console(self.context.pages)
-        # console(self.context.pages)
-        # page = self.context.pages[1]
-
-        # response = requests.get(page.url)
-        # console(response)
-        # console(new_page_info)
-        # console('Capturando evidencia')
-        # console(new_page.url)
-        # evidence_bytes = new_page.screenshot(full_page=True)
-        # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
-        # self.data['evidence'] =  'data:image/png;base64,{}'.format(evidence_b64)
-        # console(self.data)
-        # console(link_pdf)
-        # with self.page.expect_popup() as popup_info:
-        #     link_pdf.click()
-        #     popup = popup_info.value
-        # popup.wait_for_load_state(state='domcontentloaded')
-        # popup.wait_for_load_state()
-        # self.wait_sleep(20)
-        # print(popup.title)
-        # console(self.browser.contexts)
-        # console(self.context.pages)
-        # console(self.page.expect_popup)
-        # console(popup)
-        # # esperar pela nova página com o PDF
-        # page_pdf = None
-        # def on_download(dl):
-        #     nonlocal page_pdf
-        #     page_pdf = dl.page()
-
-        # self.context.on("download", on_download)
-        # with self.page.expect_popup() as popup_info:
-        #     link_pdf.click()
-        #     # self.wait_sleep(20)
-        #     popup = popup_info.value
-        # # popup.wait_for_load_state(state='domcontentloaded')
-        # # popup.wait_for_selector('//*[@id="viewer"]')
-        # # self.page.wait_for_navigation()
-        # console(popup.pdf())
-        # esperar pelo download do PDF
-        # download = page_pdf.wait_for_event('download')
-        # download_path = download.path()
-        # console(download_path)
-        # self.page.query_selector('//html/body/div/div[1]/participa-orgao-partidario/div/div[2]/form/div[6]/div/table/tbody/tr/td[4]/button').click()
-        # self.wait_sleep(20)
-        # console(self.browser.contexts)
-        # console(self.context.pages)
-        # page = self.context.new_page()
-
-        # Alternar para a nova aba
-        # page_pdf = None
-        # for pg in self.context.pages:
-        #     if pg != self.page:
-        #         page_pdf = pg
-        #         break
-        # console(page_pdf.url)
-        # page_pdf = self.context.pages[-1]
-        # pdf = page_pdf.url
-        # console(self.context.pages)
-
-        # pdf_path = os.path.join(os.getcwd(), pdf)
-        # console(pdf_path)
-        # with self.context.expect_page() as new_page_info:
-        #     self.page.query_selector('//html/body/div/div[1]/participa-orgao-partidario/div/div[2]/form/div[6]/div/table/tbody/tr/td[4]/button').click()
-        # new_page = new_page_info.value
-        # new_page.wait_for_load_state()
-        # tag = new_page.locator('embed')
-
-        # valor_atributo = tag.get_attribute("original-url")
-        # # new_page.wait_for_selector("body")
-        # console(valor_atributo)
-        # console(new_page)
-        # with new_page.expect_download() as download_info:
-        #     new_page.query_selector('button#download').click()
-        # download = download_info.value
-        # console(download.path())
-        # console('Capturando evidencia')
-        # evidence_bytes = new_page.screenshot(full_page=True)
-        # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
-        # self.data['evidence'] =  'data:image/png;base64,{}'.format(evidence_b64)
-        # console(self.data)
-        # with self.page.expect_download() as download_info:
-        #     self.page.query_selector('//html/body/div/div[1]/participa-orgao-partidario/div/div[2]/form/div[6]/div/table/tbody/tr/td[4]/button').click()
-        # download = download_info.value
-        # console(download.path())
-        # data = open(download.path(), "rb").read()
-        # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
-        # console(evidence_b64)
-        # self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
-        # console(self.data)
-        # data = open(download.path(), "rb").read()
-        # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
-        # console(evidence_b64)
-        # self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
-        # console(self.data)
-        # self.page.query_selector('/html/body/div/div[1]/participa-orgao-partidario/div/div[2]/form/div[6]/div/table/tbody/tr/td[4]/button').click()
-        # self.page.query_selector('//html/body/div/div[1]/menu-principal/div/div/div/a[4]').click()
-        # teste = self.page.query_selector('body > div > div.ng-scope > menu-principal > div > div > div > a:nth-child(4)')
-        # console(teste)
-        # self.wait_sleep(10)
+            if retry < 3:
+                console('tentando mais uma vez pois o resultado veio diferente do esperado')
+                self.quitacao_participacao_eleitor(cpf, titulo, nome_titulo, retry+1)
+            else :
+                raise Exception('resultado fora do esperado requisição retornou algo diferente de 200', response)
 
