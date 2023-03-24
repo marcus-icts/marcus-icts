@@ -1,7 +1,7 @@
 from curses import window
 import json, re, base64
 from functools import reduce
-
+import os
 import robot
 from robot.libraries.BuiltIn import BuiltIn
 
@@ -1605,3 +1605,178 @@ class CoreLib(object):
             write_results(json.dumps(data, ensure_ascii=False))
         except Exception as e:
             raise Exception('resultado fora do esperado: Erro: ', e)
+    def handler(self, page):
+        page.wait_for_load_state('networkidle')
+        console(page.url)
+        console(page.title)
+        with page.expect_download() as download_info:
+            page.click('#icon > iron-icon')
+        download = download_info.value
+        console(download.path())
+        self.wait_sleep(15)
+        data = open(download.path(), "rb").read()
+        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+        console(evidence_b64)
+        self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+        console(self.data)
+        self.wait_sleep(15)
+        self.page.close()
+        self.browser.close()
+        self.playwright.stop()
+    def add_letter(self, string, letter):
+        result = ""
+        for i in range(0, len(string), 4):
+            result += string[i:i+4] + letter
+        return result
+    def mascara_cpf(self, cpf):
+        cpf_formatado = '{}.{}.{}-{}'.format(cpf[:3], cpf[3:6], cpf[6:9], cpf[9:])
+        return cpf_formatado
+    @keyword('Quitacao Participacao Eleitor')
+    def quitacao_participacao_eleitor(self, cpf, titulo, nome_titulo):
+        nome_tratado = nome_titulo.replace(' ', '+')
+        console(nome_tratado)
+        titulo_tratado = self.add_letter(titulo, "+")
+        titulo_tratado = titulo_tratado[:-1]
+        console(titulo_tratado)
+        cpf_tratado = self.mascara_cpf(cpf)
+        console(cpf_tratado)
+        console('Enviando requisição...')
+        body = {}
+        url = "https://sgip3.tse.jus.br/sgip3-consulta/api/v1/participaOrgaoPartidario/relatorioNegativoOrgaoPartidario?cpfEleitor="+cpf_tratado+"&nomeEleitor="+nome_tratado+"&tituloEleitor="+titulo_tratado
+        console(url)
+        headers = {
+            "Accept": "application/json; charset=utf-8",
+            "Content-Type": "application/json; charset=utf-8"
+        }
+        response = requests.get(url, json= body, headers= headers)
+
+        console("response status code: " +  str(response.status_code)+"\n\n")
+        if response.status_code == 200:
+            contents = json.loads(response.content)
+            console(contents)
+            self.data['found'] = True
+            self.data['alertas'] = 0
+            historico = []
+            for content in contents:
+                console("esse é o content atual do for")
+                console(content)
+                if content['sigla'] != 'None' and content['sigla'] != None:
+                    self.data['alertas'] += 1
+                    content['alerta'] = True
+                else :
+                    content['alerta'] = False
+                historico.append(content)
+            self.data['historico'] = historico
+            console(self.data)
+        else :
+            raise Exception('resultado fora do esperado requisição retornou algo diferente de 200', response)
+        # self.wait_sleep(40)
+        # link_pdf = self.page.locator('//html/body/div/div[1]/participa-orgao-partidario/div/div[2]/form/div[6]/div/table/tbody/tr/td[4]/button')
+        # # with self.page.expect_event() as new_page_info:
+        # self.context.on('page', self.handler)
+        # link_pdf.click()
+        # self.wait_sleep(80)
+        # console("allala")
+        # console(self.page.url)
+        # console(self.context.pages)
+        # console(self.context.pages)
+        # page = self.context.pages[1]
+
+        # response = requests.get(page.url)
+        # console(response)
+        # console(new_page_info)
+        # console('Capturando evidencia')
+        # console(new_page.url)
+        # evidence_bytes = new_page.screenshot(full_page=True)
+        # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
+        # self.data['evidence'] =  'data:image/png;base64,{}'.format(evidence_b64)
+        # console(self.data)
+        # console(link_pdf)
+        # with self.page.expect_popup() as popup_info:
+        #     link_pdf.click()
+        #     popup = popup_info.value
+        # popup.wait_for_load_state(state='domcontentloaded')
+        # popup.wait_for_load_state()
+        # self.wait_sleep(20)
+        # print(popup.title)
+        # console(self.browser.contexts)
+        # console(self.context.pages)
+        # console(self.page.expect_popup)
+        # console(popup)
+        # # esperar pela nova página com o PDF
+        # page_pdf = None
+        # def on_download(dl):
+        #     nonlocal page_pdf
+        #     page_pdf = dl.page()
+
+        # self.context.on("download", on_download)
+        # with self.page.expect_popup() as popup_info:
+        #     link_pdf.click()
+        #     # self.wait_sleep(20)
+        #     popup = popup_info.value
+        # # popup.wait_for_load_state(state='domcontentloaded')
+        # # popup.wait_for_selector('//*[@id="viewer"]')
+        # # self.page.wait_for_navigation()
+        # console(popup.pdf())
+        # esperar pelo download do PDF
+        # download = page_pdf.wait_for_event('download')
+        # download_path = download.path()
+        # console(download_path)
+        # self.page.query_selector('//html/body/div/div[1]/participa-orgao-partidario/div/div[2]/form/div[6]/div/table/tbody/tr/td[4]/button').click()
+        # self.wait_sleep(20)
+        # console(self.browser.contexts)
+        # console(self.context.pages)
+        # page = self.context.new_page()
+
+        # Alternar para a nova aba
+        # page_pdf = None
+        # for pg in self.context.pages:
+        #     if pg != self.page:
+        #         page_pdf = pg
+        #         break
+        # console(page_pdf.url)
+        # page_pdf = self.context.pages[-1]
+        # pdf = page_pdf.url
+        # console(self.context.pages)
+
+        # pdf_path = os.path.join(os.getcwd(), pdf)
+        # console(pdf_path)
+        # with self.context.expect_page() as new_page_info:
+        #     self.page.query_selector('//html/body/div/div[1]/participa-orgao-partidario/div/div[2]/form/div[6]/div/table/tbody/tr/td[4]/button').click()
+        # new_page = new_page_info.value
+        # new_page.wait_for_load_state()
+        # tag = new_page.locator('embed')
+
+        # valor_atributo = tag.get_attribute("original-url")
+        # # new_page.wait_for_selector("body")
+        # console(valor_atributo)
+        # console(new_page)
+        # with new_page.expect_download() as download_info:
+        #     new_page.query_selector('button#download').click()
+        # download = download_info.value
+        # console(download.path())
+        # console('Capturando evidencia')
+        # evidence_bytes = new_page.screenshot(full_page=True)
+        # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
+        # self.data['evidence'] =  'data:image/png;base64,{}'.format(evidence_b64)
+        # console(self.data)
+        # with self.page.expect_download() as download_info:
+        #     self.page.query_selector('//html/body/div/div[1]/participa-orgao-partidario/div/div[2]/form/div[6]/div/table/tbody/tr/td[4]/button').click()
+        # download = download_info.value
+        # console(download.path())
+        # data = open(download.path(), "rb").read()
+        # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+        # console(evidence_b64)
+        # self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+        # console(self.data)
+        # data = open(download.path(), "rb").read()
+        # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+        # console(evidence_b64)
+        # self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+        # console(self.data)
+        # self.page.query_selector('/html/body/div/div[1]/participa-orgao-partidario/div/div[2]/form/div[6]/div/table/tbody/tr/td[4]/button').click()
+        # self.page.query_selector('//html/body/div/div[1]/menu-principal/div/div/div/a[4]').click()
+        # teste = self.page.query_selector('body > div > div.ng-scope > menu-principal > div > div > div > a:nth-child(4)')
+        # console(teste)
+        # self.wait_sleep(10)
+
