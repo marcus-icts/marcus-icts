@@ -15,6 +15,7 @@ from core.env import env
 from anticaptchaofficial.recaptchav2proxyless import *
 import re
 import requests
+
 @library(scope='GLOBAL', version='0.0.1')
 class CoreLib(object):
     '''
