@@ -1671,33 +1671,37 @@ class CoreLib(object):
                 "Content-Type": "application/json; charset=utf-8"
             }
 
-            body_to_generate = {
+            body = {
                 "tipoCertidao": 2,
                 "nomeEleitor": name,
-                "recaptcha": g_response,
-                "nomeMae": mothers_name,
                 "nomePai": fathers_name,
+                "nomeMae": mothers_name,
+                "recaptcha": g_response,
                 "dataNascimento": birth_date,
                 "numeroTituloEleitor": voters_card,
             }
 
-            response = requests.post(url_api_generate, json = body_to_generate, headers = headers)
-            content = json.loads(response.content)
-            
-            situation = content['situacao']
-            data_occurrence = content['dadosOcorrencia']
+            response = requests.post(url_api_generate, json = body, headers = headers)
 
-            if (situation == positive_message):
-                data['alertas'] = 1
-                data['found'] = True
-                data['situacao'] = situation
-                data['dadosOcorrencia'] = data_occurrence
-            elif (situation == negative_message):
-                data['alertas'] = 0
-                data['found'] = True
-                data['situacao'] = situation
-            else:
-                raise Exception('resultado fora do esperado')
+            try:
+                content = json.loads(response.content)
+
+                situation = content['situacao']
+                data_occurrence = content['dadosOcorrencia']
+
+                if (situation == positive_message):
+                    data['alertas'] = 1
+                    data['found'] = True
+                    data['situacao'] = situation
+                    data['dadosOcorrencia'] = data_occurrence
+                elif (situation == negative_message):
+                    data['alertas'] = 0
+                    data['found'] = True
+                    data['situacao'] = situation
+                else:
+                    raise Exception('resultado fora do esperado')
+            except json.decoder.JSONDecodeError:
+                    data['found'] = False
 
             write_results(json.dumps(data, ensure_ascii=False))
         except Exception as e:
