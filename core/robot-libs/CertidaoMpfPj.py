@@ -60,9 +60,13 @@ class CertidaoMpfPj(NewCoreLib.NewCoreLib):
                     pdf_file.write(response.content)
                     console('Criando um novo pdf...')
 
-                with open(pdf_file_name, 'rb') as pdf_file:
-                    evidence_b64 = base64.b64encode(pdf_file.read())
-                    console('Convertendo o pdf para base64...')
+                with open(pdf_file_name, 'rb') as file:
+                    pdf_bytes = file.read()
+                    console('Lendo o arquivo PDF como bytes...')
+
+                console('Codificar o arquivo PDF como Base64...')
+                pdf_base64_bytes = base64.b64encode(pdf_bytes)
+                evidence_b64 = pdf_base64_bytes.decode('utf-8')
 
                 data['evidence'] = 'data:application/pdf;base64,{}'.format(
                     evidence_b64)
