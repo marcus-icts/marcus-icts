@@ -1,7 +1,7 @@
 from curses import window
 import json, re, base64
 from functools import reduce
-
+import os
 import robot
 from robot.libraries.BuiltIn import BuiltIn
 
@@ -1653,3 +1653,78 @@ class CoreLib(object):
                         pegar_conteudo = False
         self.data['alerta'] = len(self.data['resultados'])
         write_results(json.dumps(self.data, ensure_ascii=False))
+    def handler(self, page):
+        page.wait_for_load_state('networkidle')
+        console(page.url)
+        console(page.title)
+        with page.expect_download() as download_info:
+            page.click('#icon > iron-icon')
+        download = download_info.value
+        console(download.path())
+        self.wait_sleep(15)
+        data = open(download.path(), "rb").read()
+        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
+        console(evidence_b64)
+        self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+        console(self.data)
+        self.wait_sleep(15)
+        self.page.close()
+        self.browser.close()
+        self.playwright.stop()
+    def add_letter(self, string, letter):
+        result = ""
+        for i in range(0, len(string), 4):
+            result += string[i:i+4] + letter
+        return result
+    def mascara_cpf(self, cpf):
+        cpf_formatado = '{}.{}.{}-{}'.format(cpf[:3], cpf[3:6], cpf[6:9], cpf[9:])
+        return cpf_formatado
+    @keyword('Quitacao Participacao Eleitor')
+    def quitacao_participacao_eleitor(self, cpf, titulo, nome,retry:int = 0):
+        self.data['found'] = True
+        self.data['alertas'] = 0
+        if titulo == "":
+            write_results(json.dumps(self.data, ensure_ascii=False))
+        else :
+            nome_tratado = nome.replace(' ', '+')
+            console(nome_tratado)
+            titulo_tratado = self.add_letter(titulo, "+")
+            titulo_tratado = titulo_tratado[:-1]
+            console(titulo_tratado)
+            # cpf_tratado = self.mascara_cpf(cpf)
+            cpf_tratado = cpf
+            console(cpf_tratado)
+            console('Enviando requisição...')
+            body = {}
+            url = "https://sgip3.tse.jus.br/sgip3-consulta/api/v1/participaOrgaoPartidario/relatorioNegativoOrgaoPartidario?cpfEleitor="+cpf_tratado+"&nomeEleitor="+nome_tratado+"&tituloEleitor="+titulo_tratado
+            console(url)
+            headers = {
+                "Accept": "application/json; charset=utf-8",
+                "Content-Type": "application/json; charset=utf-8"
+            }
+            response = requests.get(url, json= body, headers= headers)
+
+            console("response status code: " +  str(response.status_code)+"\n\n")
+            if response.status_code == 200:
+                contents = json.loads(response.content)
+                console(contents)
+                historico = []
+                for content in contents:
+                    console("esse é o content atual do for")
+                    console(content)
+                    if content['sigla'] != 'None' and content['sigla'] != None:
+                        self.data['alertas'] += 1
+                        content['alerta'] = True
+                    else :
+                        content['alerta'] = False
+                    historico.append(content)
+                self.data['historico'] = historico
+                console(self.data)
+                write_results(json.dumps(self.data, ensure_ascii=False))
+            else :
+                if retry < 3:
+                    console('tentando mais uma vez pois o resultado veio diferente do esperado')
+                    self.quitacao_participacao_eleitor(cpf, titulo, nome, retry+1)
+                else :
+                    raise Exception('resultado fora do esperado requisição retornou algo diferente de 200', response)
+
