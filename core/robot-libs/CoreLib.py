@@ -1727,4 +1727,3 @@ class CoreLib(object):
                     self.quitacao_participacao_eleitor(cpf, titulo, nome, retry+1)
                 else :
                     raise Exception('resultado fora do esperado requisição retornou algo diferente de 200', response)
-
