@@ -1407,11 +1407,12 @@ class CoreLib(object):
             BuiltIn().sleep('15000ms')
             console('Analisando resultado...')
             check_certidao = self.page.query_selector('//*[@id="ContainerImpressaoCertidao"]')
-            if check_certidao != None:
+            check_dados_adicionais = self.page.query_selector('body > div > main > div.text-center > div > div > h5')
+            if check_certidao != None or check_dados_adicionais != None:
                 self.data['found'] = True
                 check_processo = self.page.query_selector_all('//*[@class="registro-processo"]')
                 console(check_processo)
-                if not check_processo :
+                if not check_processo and check_dados_adicionais == None:
                     self.data['evidence'] = self.take_evidence()
                     self.data['alertas'] = 0
                 else :
