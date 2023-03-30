@@ -16,8 +16,8 @@ ${WEBSITE_KEY}                              6Le_CtAZAAAAAEbTeETvetg4zQ7kJI0NH5HN
 
 
 *** Tasks ***
-Buscar em TRF3 Eleitoral Pf
-    Abrir o navegador em                                    ${URL_TRF3}     false
+Buscar em TRF3 Civel Pf
+    Abrir o navegador em                                    ${URL_TRF3}     true       3000
     Esperar                                                 2
     Selecionar                                              ${CAMPO_TIPO_CERTIDAO}  ${TIPO_CERTIDAO}
     Selecionar                                              ${CAMPO_TIPO_DOCUMENTO}  ${TIPO_DOCUMENTO}
