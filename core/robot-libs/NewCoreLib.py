@@ -70,6 +70,18 @@ class NewCoreLib(object):
         | Digitar texto em campo | meuemail@gmail.com | #email-input |
         '''
         self.page.fill(selector, text)
+        
+    @keyword('Selecionar')
+    def choose(self, element: str, value: str):
+        self.page.select_option(element, value)
+        
+    @keyword('Seletor')
+    def query_selector(self, selector: str):
+        return self.page.query_selector(selector)
+    
+    @keyword('Esperar download')
+    def expect_download(self):
+        return self.page.expect_download()
 
     @keyword('Esperar até que elemento esteja visivel')
     def wait_for_element(self, selector: str):
