@@ -5,19 +5,16 @@ from dataUriCaptcha import dataUriCaptcha
 from robot.api.deco import keyword, library
 from anticaptchaofficial.recaptchav2proxyless import *
 
-import os
 import re
 import json
 import base64
-import requests
 import NewCoreLib
 
 
 @library(scope='GLOBAL', version='0.0.1')
-class Jfpe(NewCoreLib.NewCoreLib):
+class CertidaoJfpe(NewCoreLib.NewCoreLib):
     def solve_captcha_image_jfpe(self, selector: str, input: str, click: str, retry: int = 0):
         console('Resolvendo captcha Imagem')
-        data = {}
         self.wait_for_element(selector)
         card = self.query_selector(selector)
         result = card.screenshot()
@@ -29,13 +26,14 @@ class Jfpe(NewCoreLib.NewCoreLib):
         
         if captcha_text != 0:
             console("captcha text " + captcha_text)
+            self.captcha = captcha_text
+            self.data['captcha'] = captcha_text
             self.input_text(captcha_text, input)
 
             self.query_selector(click).click()
             self.wait_sleep(30)
             try:
                 dialog = self.query_selector('//*[@id="form:dialogCertidaoDistribuicao1_content"]')
-                
                 if dialog.is_visible():
                     console('captcha funcionou')
             except Exception as e:
@@ -45,7 +43,7 @@ class Jfpe(NewCoreLib.NewCoreLib):
                     self.solve_captcha_image_jfpe(selector, input, click, retry+1)
                 else:
                     console('Finalizando após 4 tentativas')
-                    data['found'] = False
+                    self.data['found'] = False
                     raise Exception('Erro após 4 tentativas de resolver o captcha')
         else:
             raise Exception('Erro na comunicação com o fornecedor de resolver captcha')
@@ -81,7 +79,7 @@ class Jfpe(NewCoreLib.NewCoreLib):
         else :
             raise Exception('resultado fora do esperado')
   
-    @keyword('JFPE - PF')
+    @keyword('Certidao JFPE - PF')
     def federal_justice_of_pernambuco_pf(self, cpf: str):
         try:
             url = 'https://certidoes.trf5.jus.br/certidoes2022/paginas/certidaodistribuicaoparte.faces'
@@ -94,7 +92,7 @@ class Jfpe(NewCoreLib.NewCoreLib):
             panel_path = '//*[@id="form:padPanel_content"]'
             form_validate_path = '//*[@id="form:validar"]/span'
             
-            self.open_browser(url, False)
+            self.open_browser(url)
 
             self.wait_sleep(5)
       
@@ -121,7 +119,7 @@ class Jfpe(NewCoreLib.NewCoreLib):
         except Exception as e:
             raise Exception('resultado fora do esperado: Erro: ', e)
 
-    @keyword('JFPE - PJ')
+    @keyword('Certidao JFPE - PJ')
     def federal_justice_of_pernambuco_pj(self, cnpj: str):
         try:
             url = 'https://certidoes.trf5.jus.br/certidoes2022/paginas/certidaodistribuicaoparte.faces'
@@ -134,7 +132,7 @@ class Jfpe(NewCoreLib.NewCoreLib):
             panel_path = '//*[@id="form:padPanel_content"]'
             form_validate_path = '//*[@id="form:validar"]/span'
             
-            self.open_browser(url, False)
+            self.open_browser(url)
 
             self.wait_sleep(5)
       
@@ -157,6 +155,7 @@ class Jfpe(NewCoreLib.NewCoreLib):
             self.solve_captcha_image_jfpe(form_path, jform_path, form_validate_path)
             
             self.download_jfpe()
+            
         except Exception as e:
             raise Exception('resultado fora do esperado: Erro: ', e)
     
