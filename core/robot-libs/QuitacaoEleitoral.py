@@ -79,7 +79,7 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
             btn_emitir = '//*[@id="form-quitacao-eleitoral"]/fieldset/button'
 
             self.open_browser(url)
-            self.wait_slep(3)
+            self.wait_sleep(3)
             self.input_text(nome, campo_nome_eleitor)
             self.input_text(cpf, campo_cpf)
             self.input_text(data_nascimento, campo_data_nascimento)
