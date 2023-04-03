@@ -63,7 +63,6 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
 
             write_results(json.dumps(data, ensure_ascii=False))
         except Exception as e:
-            self.open_browser(url)
             self.teardown()
             raise Exception('Erro: ', e)
         
@@ -80,7 +79,7 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
             btn_emitir = '//*[@id="form-quitacao-eleitoral"]/fieldset/button'
 
             self.open_browser(url)
-            self.wait_sleep(3)
+            self.wait_slep(3)
             self.input_text(nome, campo_nome_eleitor)
             self.input_text(cpf, campo_cpf)
             self.input_text(data_nascimento, campo_data_nascimento)
@@ -106,4 +105,5 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
             self.page.evaluate("document.querySelector('#modal-lgpd').remove()")
             self.wait_sleep(2)
         except:
+            self.teardown()
             raise Exception('Problema na navegação do site.')
