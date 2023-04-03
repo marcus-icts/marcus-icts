@@ -35,7 +35,7 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
 
             console('Enviando requisição...')
             response = requests.post(url, json= body, headers= headers)
-            console("response status code: " +  str(response.status_code)+"\n\n")
+            console("response status code: " + str(response.status_code)+"\n\n")
 
             content = json.loads(response.content)
             console(content['message'])
@@ -47,7 +47,8 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
                 data['found'] = True
                 data['evidence'] = self.take_evidence()
                 data['alertas'] = 0
-            elif (content['message'] == msg_sucesso):
+                self.teardown()
+            elif (content['status'] == 200):
                 console("url: " + content['data']['linkCertidao'])
                 self.open_browser(content['data']['linkCertidao'].replace('.pdf', ''))
                 self.wait_sleep(5)
@@ -56,12 +57,15 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
                 data['evidence'] = self.take_evidence()
                 data['alertas'] = 0 if page_text.find(textNaoQuite) == -1 else 1
                 data['found'] = True
+                self.teardown()
             else:
-                raise Exception('resultado fora do esperado')
+                raise Exception(content['message'])
 
             write_results(json.dumps(data, ensure_ascii=False))
         except Exception as e:
-            raise Exception('resultado fora do esperado: Erro: ', e)
+            self.open_browser(url)
+            self.teardown()
+            raise Exception('Erro: ', e)
         
     def abrir_quitacao_eleitoral_para_evidencia_erro(self, nome: str, cpf: str, data_nascimento: str, nome_mae: str, nome_pai: str):
         try:
@@ -102,4 +106,4 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
             self.page.evaluate("document.querySelector('#modal-lgpd').remove()")
             self.wait_sleep(2)
         except:
-            raise Exception('resultado fora do esperado')
+            raise Exception('Problema na navegação do site.')
