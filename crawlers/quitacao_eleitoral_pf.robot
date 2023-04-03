@@ -17,4 +17,3 @@ ${BTN_EMITIR}                               //*[@id="form-quitacao-eleitoral"]/f
 *** Tasks ***
 Buscar quitação eleitoral
     quitacao eleitoral                                       ${nome}    ${cpf_titulo}    ${data_nascimento}    ${nome_mae}    ${nome_pai}
-    [Teardown]  Fechar navegador e parar playwright
