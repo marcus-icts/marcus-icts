@@ -13,81 +13,108 @@ import NewCoreLib
 
 @library(scope='GLOBAL', version='0.0.1')
 class CertidaoJfpe(NewCoreLib.NewCoreLib):
-    def solve_captcha_image_jfpe(self, selector: str, input: str, click: str, retry: int = 0):
-        console('Resolvendo captcha Imagem')
-        self.wait_for_element(selector)
-        card = self.query_selector(selector)
-        result = card.screenshot()
+    def solve_captcha_image_jfpe(self, selector: str, input: str, click: str, retry: int = 1):
+        try:
+            console('Resolvendo captcha de imagem')
+            self.wait_for_element(selector)
+            card = self.query_selector(selector)
+            result = card.screenshot()
 
-        solver = dataUriCaptcha()
-        solver.set_verbose(1)
-        solver.set_key(env('CAPTCHA_KEY'))
-        captcha_text = solver.solve_and_return_solution(
-            base64.encodebytes(result))
+            console('Enviando print do captcha para o fornecedor')
 
-        if captcha_text != 0:
-            console("captcha text " + captcha_text)
-            self.captcha = captcha_text
-            self.data['captcha'] = captcha_text
-            self.input_text(captcha_text, input)
+            solver = dataUriCaptcha()
+            solver.set_verbose(1)
+            solver.set_key(env('CAPTCHA_KEY'))
+            captcha_text = solver.solve_and_return_solution(
+                base64.encodebytes(result))
 
-            self.query_selector(click).click()
-            self.wait_sleep(30)
-            try:
+            console('Resposta do captcha recebida')
+
+            if captcha_text != 0:
+                console("Inserindo resposta no input ")
+                self.captcha = captcha_text
+                self.data['captcha'] = captcha_text
+                self.input_text(captcha_text, input)
+
+                self.query_selector(click).click()
+                self.wait_sleep(20)
+
                 dialog = self.query_selector(
                     '//*[@id="form:dialogCertidaoDistribuicao1_content"]')
                 if dialog.is_visible():
-                    console('captcha funcionou')
-            except Exception as e:
-                console('Tentando novamente, deu erro de tempo ou captcha errado')
-                console(str(e))
-                if retry < 3:
-                    self.solve_captcha_image_jfpe(
-                        selector, input, click, retry+1)
-                else:
-                    console('Finalizando após 4 tentativas')
-                    self.data['found'] = False
-                    raise Exception(
-                        'Erro após 4 tentativas de resolver o captcha')
-        else:
-            raise Exception(
-                'Erro na comunicação com o fornecedor de resolver captcha')
+                    console('A resolução do captcha funcionou')
+            else:
+                raise Exception(
+                    'Não houve retorno da resolução do captcha')
+        except Exception as e:
+            if retry < 6:
+                console('Ocorreu um erro não esperando: ' + str(e))
+                console('Tentativa ' + str(retry) + ' de 5 \n')
+                self.solve_captcha_image_jfpe(
+                    selector, input, click, retry + 1)
+            else:
+                self.data['found'] = False
+                raise Exception(
+                    'Erro após 5 tentativas de resolver o captcha')
 
-    def download_jfpe(self):
-        self.wait_sleep(15)
-        self.data['found'] = True
-        check_process = self.query_selector('//*[@id="form:j_idt173"]')
-        check_ok = self.query_selector('//*[@id="form:j_idt159"]')
-        # process.env.DEBUG = 'pw:api,pw:browser*'
-        if check_process.is_visible():
-            console('tem processo')
-            self.data['alertas'] = 1
-            self.data['result'] = self.query_selector(
-                '//*[@id="form:labelTipoRetorno3"]').inner_text()
-            self.wait_sleep(20)
-            with self.expect_download() as download_info:
-                self.query_selector('//*[@id="form:j_idt173"]').click()
-            download = download_info.value
-            data = open(download.path(), "rb").read()
-            evidence_b64 = re.sub(
-                r"\n", '', base64.encodebytes(data).decode('utf-8'))
-            self.data['evidence'] = 'data:application/pdf;base64,{}'.format(
-                evidence_b64)
-            write_results(json.dumps(self.data, ensure_ascii=False))
-        elif check_ok.is_visible():
-            self.data['alertas'] = 0
-            self.wait_sleep(20)
-            with self.expect_download() as download_info:
-                self.query_selector('//*[@id="form:j_idt159"]').click()
-            download = download_info.value
-            data = open(download.path(), "rb").read()
-            evidence_b64 = re.sub(
-                r"\n", '', base64.encodebytes(data).decode('utf-8'))
-            self.data['evidence'] = 'data:application/pdf;base64,{}'.format(
-                evidence_b64)
-            write_results(json.dumps(self.data, ensure_ascii=False))
-        else:
-            raise Exception('resultado fora do esperado')
+    def download_jfpe(self, retry: int = 1):
+        try:
+            console('Iniciando a função de download do PDF')
+
+            check_ok = self.query_selector('//*[@id="form:j_idt159"]')
+            check_process = self.query_selector('//*[@id="form:j_idt173"]')
+
+            self.wait_sleep(15)
+            self.data['found'] = True
+
+            if check_process.is_visible():
+                console('O CPF ou CNPJ informado tem processo')
+
+                self.data['alertas'] = 1
+                self.data['result'] = self.query_selector(
+                    '//*[@id="form:labelTipoRetorno3"]').inner_text()
+
+                self.wait_sleep(20)
+
+                console('Baixando PDF...')
+
+                with self.expect_download() as download_info:
+                    self.query_selector('//*[@id="form:j_idt173"]').click()
+                download = download_info.value
+                data = open(download.path(), "rb").read()
+                evidence_b64 = re.sub(
+                    r"\n", '', base64.encodebytes(data).decode('utf-8'))
+                self.data['evidence'] = 'data:application/pdf;base64,{}'.format(
+                    evidence_b64)
+
+            elif check_ok.is_visible():
+                console('O CPF ou CNPJ informado não tem processo')
+
+                self.data['alertas'] = 0
+
+                self.wait_sleep(20)
+
+                console('Baixando PDF...')
+
+                with self.expect_download() as download_info:
+                    self.query_selector('//*[@id="form:j_idt159"]').click()
+                download = download_info.value
+                data = open(download.path(), "rb").read()
+
+                evidence_b64 = re.sub(
+                    r"\n", '', base64.encodebytes(data).decode('utf-8'))
+
+                self.data['evidence'] = 'data:application/pdf;base64,{}'.format(
+                    evidence_b64)
+
+        except Exception as e:
+            if retry < 6:
+                console('Ocorreu um erro não esperando: ' + str(e))
+                console('Tentativa ' + str(retry) + ' de 5 \n')
+                self.download_jfpe(retry + 1)
+            else:
+                raise Exception(
+                    'Erro após 5 tentativas de baixar o PDF')
 
     @keyword('Certidao JFPE - PF')
     def federal_justice_of_pernambuco_pf(self, cpf: str):
@@ -104,7 +131,7 @@ class CertidaoJfpe(NewCoreLib.NewCoreLib):
 
             self.open_browser(url)
 
-            self.wait_sleep(5)
+            self.wait_sleep(10)
 
             self.choose(select_path, '5')
 
@@ -127,11 +154,13 @@ class CertidaoJfpe(NewCoreLib.NewCoreLib):
 
             self.download_jfpe()
 
+            write_results(json.dumps(self.data, ensure_ascii=False))
+
             self.teardown()
 
         except Exception as e:
             self.teardown()
-            raise Exception('resultado fora do esperado: Erro: ', e)
+            raise Exception('Resultado fora do esperado, Erro: ', e)
 
     @keyword('Certidao JFPE - PJ')
     def federal_justice_of_pernambuco_pj(self, cnpj: str):
@@ -148,7 +177,7 @@ class CertidaoJfpe(NewCoreLib.NewCoreLib):
 
             self.open_browser(url)
 
-            self.wait_sleep(5)
+            self.wait_sleep(10)
 
             self.choose(select_path, '5')
 
@@ -171,8 +200,10 @@ class CertidaoJfpe(NewCoreLib.NewCoreLib):
 
             self.download_jfpe()
 
+            write_results(json.dumps(self.data, ensure_ascii=False))
+
             self.teardown()
 
         except Exception as e:
             self.teardown()
-            raise Exception('resultado fora do esperado: Erro: ', e)
+            raise Exception('Resultado fora do esperado, Erro: ', e)
