@@ -3,13 +3,16 @@ from robot.api.logger import console
 from utils import write_results
 from robot.libraries.BuiltIn import BuiltIn
 from playwright.sync_api import sync_playwright
-import json, re, base64
+import json
+import re
+import base64
+
 
 @library(scope='GLOBAL', version='0.0.1')
 class NewCoreLib(object):
 
     @keyword('Abrir o navegador em')
-    def open_browser(self, url: str, headless: bool = True, slow_mo: float = None, navegador: str = 'firefox'):
+    def open_browser(self, url: str, headless: bool = True, slow_mo: float = None, navegador: str = 'firefox', ignore_https_errors: bool = False):
         '''
         Inicializa o serviço do playwright, executa o navegador (firefox) e abre uma página na URL especificada.
 
@@ -26,11 +29,12 @@ class NewCoreLib(object):
         self.playwright = sync_playwright().start()
         self.browser = self.playwright[navegador].launch(
             headless=headless, slow_mo=slow_mo)
-        self.context = self.browser.new_context()
+        self.context = self.browser.new_context(
+            ignore_https_errors=ignore_https_errors)
         self.page = self.context.new_page()
         self.page.goto(url, timeout=180000)
         self.data = {}
-    
+
     @keyword('Fechar navegador e parar playwright')
     def teardown(self):
         '''
@@ -70,15 +74,15 @@ class NewCoreLib(object):
         | Digitar texto em campo | meuemail@gmail.com | #email-input |
         '''
         self.page.fill(selector, text)
-        
+
     @keyword('Selecionar')
     def choose(self, element: str, value: str):
         self.page.select_option(element, value)
-        
+
     @keyword('Seletor')
     def query_selector(self, selector: str):
         return self.page.query_selector(selector)
-    
+
     @keyword('Esperar download')
     def expect_download(self):
         return self.page.expect_download()
@@ -99,36 +103,10 @@ class NewCoreLib(object):
     @keyword('Printar tela')
     def take_evidence(self):
         evidence_bytes = self.page.screenshot(full_page=True)
-        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(evidence_bytes).decode('utf-8'))
-        return 'data:image/png;base64,{}'.format(evidence_b64) 
+        evidence_b64 = re.sub(r"\n", '', base64.encodebytes(
+            evidence_bytes).decode('utf-8'))
+        return 'data:image/png;base64,{}'.format(evidence_b64)
 
     @keyword('Esperar')
     def wait_sleep(self, time: str):
         BuiltIn().sleep(time)
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
