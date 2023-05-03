@@ -21,6 +21,13 @@ class ConsultaMexico(NewCoreLib.NewCoreLib):
 
             self.wait_sleep(tempo)
 
+            self.click_at('//*[@id="consulta:tipoSol"]/div[2]')
+
+            self.wait_sleep(2)
+
+            self.click_at('//*[@id="consulta:tipoSol_panel"]/div/ul/li[2]')
+
+            self.wait_sleep(3)
             self.input_text(cnpj, input_cnpj)
 
             self.wait_sleep(tempo)
