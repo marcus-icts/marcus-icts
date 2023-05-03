@@ -17,7 +17,7 @@ class ConsultaMexico(NewCoreLib.NewCoreLib):
             botao_validar = '//*[@id="consulta:btnBuscar"]'
 
             tempo = 6
-            self.open_browser(url, False, 1000)
+            self.open_browser(url, True, 1000)
 
             self.wait_sleep(tempo)
 
