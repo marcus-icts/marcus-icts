@@ -11,7 +11,7 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
         try:
             msg_dados_invalidos = 'Os dados informados (nome, data de nascimento ou filiação) não conferem com aqueles constantes do Cadastro Eleitoral.'
             msg_doc_invalido = 'Título de eleitor inválido'
-            msg_sucesso = 'Consulta realizada com sucesso'
+            msg_recaptcha = 'A validação do reCAPTCHA falhou.'
             nome_pai = nome_pai if nome_pai != '' else 'NAO CONSTA'
             nome_mae = nome_mae if nome_mae != '' else 'NAO CONSTA'
             data = {}
@@ -40,7 +40,7 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
             content = json.loads(response.content)
             console(content['message'])
 
-            if (content['message'] == msg_dados_invalidos or content['message'] == msg_doc_invalido):
+            if (content['message'] == msg_dados_invalidos or content['message'] == msg_doc_invalido) or content['message'] == msg_recaptcha:
                 console("alerta: " + content['message'])
                 console("Avaliação deve ser concluida com risco baixo")
                 self.abrir_quitacao_eleitoral_para_evidencia_erro(nome, cpf, data_nascimento, nome_mae, nome_pai)
@@ -66,7 +66,7 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
         except Exception as e:
             self.teardown()
             raise Exception('Erro: ', e)
-        
+
     def abrir_quitacao_eleitoral_para_evidencia_erro(self, nome: str, cpf: str, data_nascimento: str, nome_mae: str, nome_pai: str):
         try:
             url = 'https://www.tse.jus.br/servicos-eleitorais/certidoes/certidao-de-quitacao-eleitoral'
@@ -82,7 +82,9 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
             self.open_browser(url)
             self.wait_sleep(3)
             self.input_text(nome, campo_nome_eleitor)
+            self.wait_sleep(1)
             self.input_text(cpf, campo_cpf)
+            self.wait_sleep(1)
             self.input_text(data_nascimento, campo_data_nascimento)
             self.wait_sleep(3)
 
