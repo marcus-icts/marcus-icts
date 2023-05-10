@@ -1,8 +1,10 @@
 from robot.api.deco import keyword, library
 from robot.api.logger import console
 from utils import write_results
+from core.env import env
 from robot.libraries.BuiltIn import BuiltIn
 from playwright.sync_api import sync_playwright
+from anticaptchaofficial.recaptchav2proxyless import *
 import json
 import re
 import base64
@@ -10,7 +12,6 @@ import base64
 
 @library(scope='GLOBAL', version='0.0.1')
 class NewCoreLib(object):
-
     @keyword('Abrir o navegador em')
     def open_browser(self, url: str, headless: bool = True, slow_mo: float = None, navegador: str = 'firefox', ignore_https_errors: bool = False):
         '''
@@ -110,3 +111,17 @@ class NewCoreLib(object):
     @keyword('Esperar')
     def wait_sleep(self, time: str):
         BuiltIn().sleep(time)
+
+    @keyword('RecaptchaV2 TRF4')
+    def recaptchaV2(self, site_url: str, website_key: str):
+        solver = recaptchaV2Proxyless()
+        solver.set_verbose(1)
+        solver.set_key(env('CAPTCHA_KEY'))
+        solver.set_website_url(site_url)
+        solver.set_website_key(website_key)
+        g_response = solver.solve_and_return_solution() #resposta do captcha
+        if g_response != 0:
+            return g_response
+        else:
+            console(solver.error_code)
+            return False
