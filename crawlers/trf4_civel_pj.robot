@@ -8,4 +8,4 @@ ${TIPO_CERTIDAO}                            //*[@id="frmCertidao"]/fieldset/b/in
 
 *** Tasks ***
 Buscar em TRF4 Civel Pj
-    trf4                                                    ${cpf}    ${TIPO_CERTIDAO}
+    trf4                                                    ${cnpj}    ${TIPO_CERTIDAO}
