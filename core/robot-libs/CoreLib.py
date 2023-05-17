@@ -1426,75 +1426,13 @@ class CoreLib(object):
             raise Exception('Erro na comunicação com o fornecedor de solução de captcha. ' + solver.error_code)
 
         write_results(json.dumps(self.data, ensure_ascii=False))
-
-    @keyword('RecaptchaV2 TRF4')
-    def recaptchaV2_trf4(self, site_url: str, website_key: str, cpf:str, campo_documento:str, tipo_certidao:str, retry: int = 0):
-        solver = recaptchaV2Proxyless()
-        solver.set_verbose(1)
-        solver.set_key(env('CAPTCHA_KEY'))
-        solver.set_website_url(site_url)
-        solver.set_website_key(website_key)
-        g_response = solver.solve_and_return_solution() #resposta do captcha
-        if g_response != 0:
-            console("Inserindo resposta do captcha no textArea...")
-            self.page.eval_on_selector('#g-recaptcha-response', '(el) => el.value =' +"'"+ g_response +"'")
-
-            self.wait_sleep(10)
-            self.page.query_selector('//*[@id="botaoEmitir"]').click()
-            BuiltIn().sleep('15000ms')
-            console('Analisando resultado...')
-            check_certidao = self.page.query_selector('body > strong:nth-child(1)')
-            if check_certidao == None:
-                self.data['found'] = True
-                str_check= '//*[@id="formulario_solicitacao"]/p[1]'
-                check_processo = self.page.query_selector(str_check)
-                console(check_processo)
-                if check_processo and (
-                    self.page.query_selector(str_check).inner_text() == 'ATENÇÃO: NÃO FOI POSSÍVEL EMITIR A CERTIDÃO JUDICIAL CÍVEL'
-                    or self.page.query_selector(str_check).inner_text() == 'ATENÇÃO: NÃO FOI POSSÍVEL EMITIR A CERTIDÃO JUDICIAL CRIMINAL'
-                    or self.page.query_selector(str_check).inner_text() == 'ATENÇÃO: NÃO FOI POSSÍVEL EMITIR A CERTIDÃO JUDICIAL PARA FINS ELEITORAIS'
-                ):
-                    data = self.page.query_selector('//*[@id="divDetalhesPoliticaPrivacidade"]')
-                    if data != None :
-                        self.page.evaluate('document.querySelector("#divDetalhesPoliticaPrivacidade").remove()')
-                    self.data['evidence'] = self.take_evidence()
-                    self.data['alertas'] = 1
-                else :
-                    with self.page.expect_download() as download_info:
-                        self.page.query_selector('//*[@id="botaoVisualizar"]').click()
-                    download = download_info.value
-                    console(download.path())
-                    data = open(download.path(), "rb").read()
-                    evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
-                    console(evidence_b64)
-                    self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
-                    self.data['alertas'] = 0
-            else :
-                console('Tentando novamente, deu erro de tempo ou recaptcha errado')
-                if retry < 3:
-                    self.page.go_back()
-                    self.wait_sleep(2)
-                    self.input_text(cpf, campo_documento)
-                    self.wait_sleep(3)
-                    self.click_at(tipo_certidao)
-                    self.wait_sleep(3)
-                    self.recaptchaV2_trf4(site_url, website_key, cpf, campo_documento, tipo_certidao, retry+1)
-                else:
-                    console('Finalizando após 4 tentativas')
-                    raise Exception('Erro após 4 tentativas')
-        else :
-            console("quebra recaptcha falhou, erro: " + solver.error_code)
-            raise Exception('Erro na comunicação com o fornecedor de solução de captcha. ' + solver.error_code)
-
-        write_results(json.dumps(self.data, ensure_ascii=False))
+    
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
             return False
         return True
-
-    
-    
+  
     @keyword('Pegar dados da tabela Uruguai')
     def tabela_uruguai(self, paginacao: str):
         self.data['found'] = True
@@ -1568,6 +1506,7 @@ class CoreLib(object):
     def mascara_cpf(self, cpf):
         cpf_formatado = '{}.{}.{}-{}'.format(cpf[:3], cpf[3:6], cpf[6:9], cpf[9:])
         return cpf_formatado
+    
     @keyword('Quitacao Participacao Eleitor')
     def quitacao_participacao_eleitor(self, cpf, titulo, nome,retry:int = 0):
         self.data['found'] = True
