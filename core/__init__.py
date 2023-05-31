@@ -16,6 +16,7 @@ def _consume():
   queue_prefix = env('RABBIT_QUEUE_PREFIX', 'icts-crawler')
   conn = BlockingConnection(ConnectionParameters(
     env('RABBITMQ_HOST', '127.0.0.1'),
+    heartbeat=6000,
     credentials=PlainCredentials(
       env('RABBITMQ_USER', 'guest'),
       env('RABBITMQ_PASS', 'guest')
