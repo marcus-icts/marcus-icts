@@ -81,6 +81,7 @@ class OffShore(NewCoreLib.NewCoreLib):
                 found = False
                 alerts = 0
                 results = False
+                self.teardown()
             else:
                 raise Exception('Erro fora esperado')
         
