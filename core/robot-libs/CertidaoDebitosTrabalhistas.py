@@ -23,7 +23,7 @@ class CertidaoDebitosTrabalhistas(NewCoreLib.NewCoreLib):
             doc_input_xpath = '//*[@id="gerarCertidaoForm:cpfCnpj"]'
 
             console('Abrindo o Browser')
-            self.open_browser(url, headless=False)
+            self.open_browser(url)
 
             self.wait_sleep(5)
             
