@@ -1,93 +1,113 @@
-from core.env import env
 from utils import write_results
 from robot.api.logger import console
 from robot.api.deco import keyword, library
 from anticaptchaofficial.recaptchav2proxyless import *
 
-import os
 import re
 import json
 import base64
-import requests
 import NewCoreLib
 
 
 @library(scope='GLOBAL', version='0.0.1')
 class CertidaoEmbargos(NewCoreLib.NewCoreLib):
     @keyword('Certidao Embargos - PF')
-    def certificate_embargo_pf(self, cpf: str):
+    def certificate_embargo_pf(self, cpf: str, retry: int = 0):
         try:
-            data = {}
+            console('\nTentativa ' + str(retry + 1) + ' de 5')
+
             cpf_formatted = re.sub('[^0-9]', '', cpf)
-            pdf_file_name = 'certidao_embargos_pf_' + cpf_formatted + '.pdf'
-            url = 'https://servicos.ibama.gov.br/ctf/publico/areasembargadas/ConsultaPublicaAreasEmbargadas.php?modulo=publico/areasembargadas/CertidaoNadaConsta.php&$bvars=' + \
-                str(cpf_formatted) + '&ajax=1&fpdf=1'
 
-            try:
-                # O verify foi setado para False porque o site está com problemas no certificado SSL
-                response = requests.get(url, verify=False)
+            url = 'https://servicos.ibama.gov.br/ctf/publico/areasembargadas/ConsultaPublicaAreasEmbargadas.php'
 
-                with open(pdf_file_name, 'wb') as pdf_file:
-                    pdf_file.write(response.content)
-                    console('Criando um novo pdf...')
+            doc_input_xpath = '//html/body/div[1]/div/div/div/div/div/div/div/div/div/div/div/form/table/tbody/tr[2]/td/div/table/tbody/tr[3]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr[8]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[2]/input'
+            submit_button_xpath = '//html/body/div[1]/div/div/div/div/div/div/div/div/div/div/div/form/table/tbody/tr[2]/td/div/table/tbody/tr[3]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr[8]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td/button'
 
-                with open(pdf_file_name, 'rb') as file:
-                    pdf_bytes = file.read()
-                    console('Lendo o arquivo PDF como bytes...')
+            console('Abrindo o Browser')
+            self.open_browser(url, ignore_https_errors=True)
 
-                console('Codificar o arquivo PDF como Base64...')
-                pdf_base64_bytes = base64.b64encode(pdf_bytes)
-                evidence_b64 = pdf_base64_bytes.decode('utf-8')
+            self.wait_sleep(5)
 
-                data['evidence'] = 'data:application/pdf;base64,{}'.format(
-                    evidence_b64)
-                data['found'] = True
-                data['evidence_type'] = 'pdf'
+            console('Digitando o CPF...')
+            self.input_text(cpf_formatted, doc_input_xpath)
 
-            except requests.exceptions.RequestException as e:
-                data['found'] = False
+            self.wait_sleep(3)
 
-            console('Remover o pdf...')
-            os.remove(pdf_file_name)
-            write_results(json.dumps(data, ensure_ascii=False))
+            console('Iniciando o download do PDF...')
+            with self.expect_download() as download_info:
+                self.click_at(submit_button_xpath)
+
+            download = download_info.value
+            data = open(download.path(), "rb").read()
+            console('PDF baixado com sucesso')
+
+            console('Covertendo PDF para base64')
+            evidence_b64 = re.sub(
+                r"\n", '', base64.encodebytes(data).decode('utf-8'))
+
+            console('Conversão realizada com sucesso')
+            self.data['found'] = True
+            self.data['evidence_type'] = 'pdf'
+            self.data['evidence'] = 'data:application/pdf;base64,{}'.format(
+                evidence_b64)
+
+            self.teardown()
+
+            write_results(json.dumps(self.data, ensure_ascii=False))
         except Exception as e:
-            raise Exception('resultado fora do esperado: Erro: ', e)
+            if retry < 4:
+                console('Ocorreu um erro não esperando: ' + str(e))
+                self.teardown()
+                self.certificate_embargo_pf(cpf, retry + 1)
+            else:
+                raise Exception(
+                    'Erro após 5 tentativas de pegar a Certidao Embargos - PF')
 
     @keyword('Certidao Embargos - PJ')
-    def certificate_embargo_pj(self, cnpj: str):
+    def certificate_embargo_pj(self, cnpj: str, retry: int = 0):
         try:
-            data = {}
+            console('\nTentativa ' + str(retry + 1) + ' de 5')
             cnpj_formatted = re.sub('[^0-9]', '', cnpj)
-            pdf_file_name = 'certidao_embargos_pf_' + cnpj_formatted + '.pdf'
-            url = 'https://servicos.ibama.gov.br/ctf/publico/areasembargadas/ConsultaPublicaAreasEmbargadas.php?modulo=publico/areasembargadas/CertidaoNadaConsta.php&$bvars=' + \
-                str(cnpj_formatted) + '&ajax=1&fpdf=1'
 
-            try:
-                # O verify foi setado para False porque o site está com problemas no certificado SSL
-                response = requests.get(url, verify=False)
+            url = 'https://servicos.ibama.gov.br/ctf/publico/areasembargadas/ConsultaPublicaAreasEmbargadas.php'
 
-                with open(pdf_file_name, 'wb') as pdf_file:
-                    pdf_file.write(response.content)
-                    console('Criando um novo pdf...')
+            doc_input_xpath = '//html/body/div[1]/div/div/div/div/div/div/div/div/div/div/div/form/table/tbody/tr[2]/td/div/table/tbody/tr[3]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr[8]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[2]/input'
+            submit_button_xpath = '//html/body/div[1]/div/div/div/div/div/div/div/div/div/div/div/form/table/tbody/tr[2]/td/div/table/tbody/tr[3]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr[8]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td/button'
 
-                with open(pdf_file_name, 'rb') as file:
-                    pdf_bytes = file.read()
-                    console('Lendo o arquivo PDF como bytes...')
+            console('Abrindo o Browser')
+            self.open_browser(url, ignore_https_errors=True)
 
-                console('Codificar o arquivo PDF como Base64...')
-                pdf_base64_bytes = base64.b64encode(pdf_bytes)
-                evidence_b64 = pdf_base64_bytes.decode('utf-8')
+            self.wait_sleep(5)
 
-                data['evidence'] = 'data:application/pdf;base64,{}'.format(
-                    evidence_b64)
-                data['found'] = True
-                data['evidence_type'] = 'pdf'
+            console('Digitando o CNPJ...')
+            self.input_text(cnpj_formatted, doc_input_xpath)
 
-            except requests.exceptions.RequestException as e:
-                data['found'] = False
+            self.wait_sleep(3)
 
-            console('Remover o pdf...')
-            os.remove(pdf_file_name)
-            write_results(json.dumps(data, ensure_ascii=False))
+            console('Iniciando o download do PDF...')
+            with self.expect_download() as download_info:
+                self.click_at(submit_button_xpath)
+
+            download = download_info.value
+            data = open(download.path(), "rb").read()
+            console('PDF baixado com sucesso')
+
+            console('Covertendo PDF para base64')
+            evidence_b64 = re.sub(
+                r"\n", '', base64.encodebytes(data).decode('utf-8'))
+
+            console('Conversão realizada com sucesso')
+            self.data['found'] = True
+            self.data['evidence_type'] = 'pdf'
+            self.data['evidence'] = 'data:application/pdf;base64,{}'.format(
+                evidence_b64)
+
+            write_results(json.dumps(self.data, ensure_ascii=False))
         except Exception as e:
-            raise Exception('resultado fora do esperado: Erro: ', e)
+            if retry < 4:
+                console('Ocorreu um erro não esperando: ' + str(e))
+                self.teardown()
+                self.certificate_embargo_pj(cnpj, retry + 1)
+            else:
+                raise Exception(
+                    'Erro após 5 tentativas de pegar a Certidao Embargos - PJ')
