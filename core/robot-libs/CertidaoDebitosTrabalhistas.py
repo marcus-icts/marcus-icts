@@ -68,13 +68,13 @@ class CertidaoDebitosTrabalhistas(NewCoreLib.NewCoreLib):
                self.data['evidence_type'] = 'pdf'
                self.data['evidence'] = 'data:application/pdf;base64,{}'.format(
                     evidence_b64)
-               
+
+               self.teardown()
+                
                write_results(json.dumps(self.data, ensure_ascii=False))
             else:
                 raise Exception(
                     'Não houve retorno da resolução do captcha')
-
-            
         except Exception as e:
             if retry < 4:
                 console('Ocorreu um erro não esperando: ' + str(e))
