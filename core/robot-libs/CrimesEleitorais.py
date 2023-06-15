@@ -64,12 +64,13 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
             self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
             self.data['found'] = True
             self.data['evidence_type'] = 'pdf'
-            
+
             self.wait_sleep(2)
             write_results(json.dumps(self.data, ensure_ascii=False))
             self.wait_sleep(2)
             self.teardown()
         except Exception as e:
+            self.teardown()
             if (self.page.query_selector('//*[@id="ancora-1"]/div/div[1]') != None):
                 console('Certidão não emitida')
                 self.wait_sleep(1)
@@ -78,7 +79,5 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
                 self.data['evidence_type'] = 'image'
                 self.wait_sleep(2)
                 write_results(json.dumps(self.data, ensure_ascii=False))
-                self.teardown()
             else:
-                self.teardown()
                 raise Exception('resultado fora do esperado. erro: ', str(e))

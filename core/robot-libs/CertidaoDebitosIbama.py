@@ -215,11 +215,11 @@ class CertidaoDebitosIbama(NewCoreLib.NewCoreLib):
             self.teardown()
 
         except Exception as e:
+            self.teardown()
             if retry < 6:
                 console('Ocorreu um erro não esperando: ' + str(e))
                 console('Tentativa ' + str(retry) + ' de 5 \n')
-                self.teardown()
                 self.certidao_debitos_ibama(doc, retry + 1)
             else:
                 raise Exception(
-                    'Erro após 5 tentativas de pegar a Certdião de Débitos Ibama')
+                    'Erro após 5 tentativas de pegar a Certidão de Débitos Ibama')

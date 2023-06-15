@@ -9,11 +9,12 @@ class Trf4(NewCoreLib.NewCoreLib):
     @keyword('trf4')
     def execute_trf4(self, documento: str, tipo_certidao: str, retry: int = 0):
         url = 'https://www2.trf4.jus.br/trf4/processos/certidao/index.php'
+        console("Abrindo navegador...")
+        self.open_browser("https://www2.trf4.jus.br/trf4/processos/certidao/index.php")
+
         campo_documento = '//*[@id="string_cpf"]'
         website_key = '6Ldv-vIUAAAAAN2v6GbNs9w5HTS0HTTLhFL8dDB8'
 
-        console("Abrindo navegador...")
-        self.open_browser("https://www2.trf4.jus.br/trf4/processos/certidao/index.php")
         self.wait_sleep(3)
 
         console("Digitar documento")
@@ -31,7 +32,7 @@ class Trf4(NewCoreLib.NewCoreLib):
             while tries < 4:
                 if response == False:
                     console("Problema na resolução do recaptcha. Tentativa número " + str(tries))
-                    response = self.recaptchaV2(url, website_key) 
+                    response = self.recaptchaV2(url, website_key)
                     tries += 1
                 else:
                     console("Recaptcha resolvido com sucesso")
@@ -47,7 +48,7 @@ class Trf4(NewCoreLib.NewCoreLib):
             self.wait_sleep(5)
             self.page.query_selector('//*[@id="botaoEmitir"]').click()
             self.wait_sleep(10)
-            
+
             console('Analisando resultado...')
             check_certidao = self.page.query_selector('body > strong:nth-child(1)')
 
@@ -86,10 +87,11 @@ class Trf4(NewCoreLib.NewCoreLib):
                 else:
                     console('Finalizando após 4 tentativas')
                     raise Exception('Erro após 4 tentativas')
-                
+
             self.wait_sleep(5)
             write_results(json.dumps(self.data, ensure_ascii=False))
             self.teardown()
-            
+
         except Exception as e:
+            self.teardown()
             raise Exception('Erro: ', e)

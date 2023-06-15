@@ -4,6 +4,7 @@ import traceback
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
 from datetime import datetime
+from robot.api.logger import console
 
 from .logger import get_logger
 from .env import env
@@ -42,8 +43,9 @@ def callback_wrapper(ch: BlockingChannel, method: Basic.Deliver, properties: Bas
   não previsto será jogado para uma fila de erro, sem quebrar o consumidor
   '''
 
-  logger = get_logger()
-  logger.info(" [x] Received %r" % body)
+#   logger = get_logger()
+#   logger.info(" [x] Received %r" % body)
+  console(" [x] Received %r" % body)
   try:
     on_message_callback(ch, method, properties, body)
   except Exception as e:
@@ -62,4 +64,5 @@ def callback_wrapper(ch: BlockingChannel, method: Basic.Deliver, properties: Bas
         properties
     )
     ch.basic_ack(method.delivery_tag)
-    logger.error(" [x] Unexpected error while processing message: %s. Message: '%r'. The message was forwarded to the error queue." % (repr(e), request))
+    console(" [x] Unexpected error while processing message: %s. Message: '%r'. The message was repplyed with error" % (repr(e), request))
+    # logger.error(" [x] Unexpected error while processing message: %s. Message: '%r'. The message was repplyed with error" % (repr(e), request))
