@@ -25,7 +25,7 @@ class OffShore(NewCoreLib.NewCoreLib):
             if self.page.query_selector(checkbox_terms) != None:
                 self.click_at(checkbox_terms)
                 self.wait_sleep(1)
-                self.click_at('//*[@id="__BVID__44___BV_modal_body_"]/form/div/div[2]/button')  
+                self.click_at('//*[@id="__BVID__44___BV_modal_body_"]/form/div/div[2]/button')
             self.wait_sleep(3)
             self.input_text('"' + nome + '"', field_search)
             self.wait_sleep(1)
@@ -84,12 +84,13 @@ class OffShore(NewCoreLib.NewCoreLib):
                 self.teardown()
             else:
                 raise Exception('Erro fora esperado')
-        
+
             self.data['results'] = results
             self.data['found'] = found
             self.data['alerts'] = alerts
             write_results(json.dumps(self.data, ensure_ascii=False))
         except Exception as e:
+            self.teardown()
             raise Exception('Erro: ', e)
 
 

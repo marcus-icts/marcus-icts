@@ -55,9 +55,9 @@ class CertidaoEmbargos(NewCoreLib.NewCoreLib):
 
             write_results(json.dumps(self.data, ensure_ascii=False))
         except Exception as e:
+            self.teardown()
             if retry < 4:
                 console('Ocorreu um erro não esperando: ' + str(e))
-                self.teardown()
                 self.certificate_embargo_pf(cpf, retry + 1)
             else:
                 raise Exception(
@@ -101,12 +101,12 @@ class CertidaoEmbargos(NewCoreLib.NewCoreLib):
             self.data['evidence_type'] = 'pdf'
             self.data['evidence'] = 'data:application/pdf;base64,{}'.format(
                 evidence_b64)
-
             write_results(json.dumps(self.data, ensure_ascii=False))
+            self.teardown()
         except Exception as e:
+            self.teardown()
             if retry < 4:
                 console('Ocorreu um erro não esperando: ' + str(e))
-                self.teardown()
                 self.certificate_embargo_pj(cnpj, retry + 1)
             else:
                 raise Exception(

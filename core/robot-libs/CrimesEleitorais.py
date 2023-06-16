@@ -64,7 +64,7 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
             self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
             self.data['found'] = True
             self.data['evidence_type'] = 'pdf'
-            
+
             self.wait_sleep(2)
             write_results(json.dumps(self.data, ensure_ascii=False))
             self.wait_sleep(2)
