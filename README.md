@@ -3,7 +3,9 @@
 ## Requisitos
 	- Python 3.9.1 ou superior;
 ## Instalação
-É recomendado realizar a instalação em um ambiente virtual isolado ([virtualenv](https://docs.python.org/3/library/venv.html)). Para instalar as dependências do projeto executar os seguintes comandos dentro da pasta raiz do projeto:
+sudo  apt install python3.<version>-venv
+python -m venv venv
+source ./venv/bin/activate
 
 ```sh
 (venv) $ pip install -r requirements.txt
