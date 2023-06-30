@@ -93,5 +93,6 @@ class Trf4(NewCoreLib.NewCoreLib):
             self.teardown()
 
         except Exception as e:
+            console("Erro ao processar trf4: " + str(e))
             self.teardown()
             raise Exception('Erro: ', e)
