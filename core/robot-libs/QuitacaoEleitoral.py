@@ -64,6 +64,7 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
 
             write_results(json.dumps(data, ensure_ascii=False))
         except Exception as e:
+            console("Erro ao processar quitação eleitoral: " + str(e))
             self.teardown()
             raise Exception('Erro: ', e)
 
@@ -107,5 +108,6 @@ class QuitacaoEleitoral(NewCoreLib.NewCoreLib):
             self.wait_sleep(5)
             self.page.evaluate("document.querySelector('#modal-lgpd').remove()")
             self.wait_sleep(2)
-        except:
+        except Exception as e:
+            console("Erro ao navegar no site quitação eleitoral: " + str(e))
             raise Exception('Problema na navegação do site.')
