@@ -9,7 +9,7 @@ def consume():
 
 @click.command()
 @click.option('-s', '--subject', required=True, type=str, help="Crawler's file name (without extension .robot)")
-@click.option('-d', '--related-data', type=str, help="Related data need to execute the task in JSON")
+@click.option('-d', '--related-data', required=False, type=str, help="Related data need to execute the task in JSON")
 def run(subject: str, related_data: Optional[str]):
   _run(subject, related_data)
 

@@ -59,7 +59,7 @@ def run(subject, related_data):
 
   setup_logger()
 
-  related_data = None if related_data is None else json.loads(related_data)
+  related_data = {} if related_data is None else json.loads(related_data)
   result = exec_robot(subject, related_data)
   get_logger().info(result)
 
