@@ -110,13 +110,8 @@ class NewCoreLib(object):
             evidence_bytes).decode('utf-8'))
         return 'data:image/png;base64,{}'.format(evidence_b64)
 
-<<<<<<< Updated upstream
     @keyword('Esperar')
-    def wait_sleep(self, time_to_wait: str|int):
-=======
-    @keyword("Esperar")
     def wait_sleep(self, time_to_wait):
->>>>>>> Stashed changes
         BuiltIn().sleep(time_to_wait)
 
     @keyword('RecaptchaV2 TRF4')
