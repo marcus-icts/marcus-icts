@@ -46,7 +46,7 @@ class CompraSal(NewCoreLib.NewCoreLib):
                 pass  # Evita que o Script quebre se não for possível abrir o navegador
 
     @keyword("comprasal")
-    def comprasal(self, name: str) -> None:
+    def comprasal(self, name: str):
         """
         Consulta a API do CompraSal (El Salvador).
         :param name: Termo a ser pesquisado na API
@@ -126,7 +126,7 @@ class CompraSal(NewCoreLib.NewCoreLib):
 
         write_results(json.dumps({"data": results}, ensure_ascii=False))
 
-    def make_request(self, url, method="GET", data=None) -> requests.Response | None:
+    def make_request(self, url, method="GET", data=None):
         """
         Realiza uma requisição HTTP.
         :param url: Endereço da requisição
@@ -167,7 +167,7 @@ class CompraSal(NewCoreLib.NewCoreLib):
 
         return response
 
-    def show_message_total_results(self, results: int) -> None:
+    def show_message_total_results(self, results: int):
         """
         Exibe uma mensagem com o total de resultados
         :return: None
@@ -179,7 +179,7 @@ class CompraSal(NewCoreLib.NewCoreLib):
         else:
             console(f"\n{results} resultados encontrados")
 
-    def evidence(self, url: str) -> str:
+    def evidence(self, url: str):
         """
         Tira um screenshot da página pesquisada e retorna o base64.
         :return: Base64 da imagem
