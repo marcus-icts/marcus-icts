@@ -3,7 +3,7 @@ from robot.api.logger import console
 from robot.api.deco import keyword, library
 from anticaptchaofficial.recaptchav2proxyless import *
 
-import json, re, base64
+import json, re, base64, requests
 import NewCoreLib
 
 @library(scope='GLOBAL', version='0.0.1')
@@ -41,15 +41,23 @@ class Honduras(NewCoreLib.NewCoreLib):
 
         console("Preparando o download das evidencias")       
         for result in results:
-            with self.page.expect_download() as download_info:
-                console(result['pdf_url'])
-                self.page.goto(result['pdf_url'])
-                self.wait_sleep(2)
-            download = download_info.value
-            file = open(download.path(), "rb").read()
-            evidence_b64 = re.sub(r"\n", '', base64.encodebytes(file).decode('utf-8'))
-            result['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
-            self.wait_sleep(2)
+            response = requests.get(result['pdf_url'])
+            if response.status_code == 200:
+                console("Download coletado com sucesso")
+                pdf_content = response.content
+                evidence_b64 = base64.b64encode(pdf_content).decode('utf-8')
+                result['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
+                self.wait_sleep(1)
+
+            # TRECHO DE CÓDIGO QUE NÃO FUNCIONAVA EM INT (PARA AVALIAR FUTURAMENTE)
+            # with self.page.expect_download() as download_info:
+            #     console(result['pdf_url'])
+            #     self.page.goto(result['pdf_url'])
+            #     self.wait_sleep(2)
+            # download = download_info.value
+            # file = open(download.path(), "rb").read()
+            # evidence_b64 = re.sub(r"\n", '', base64.encodebytes(file).decode('utf-8'))
+            
                 
         
         data['results'] = results
