@@ -38,11 +38,6 @@ class CompraSal(NewCoreLib.NewCoreLib):
         Inicializa o serviço do playwright e executa o navegador.
         :return: None
         """
-        if self.browser is None:
-            try:
-                self.open_browser("about:blank")
-            except Exception:
-                pass  # Evita que o Script quebre se não for possível abrir o navegador
 
     @keyword("comprasal")
     def comprasal(self, name: str):
@@ -112,7 +107,6 @@ class CompraSal(NewCoreLib.NewCoreLib):
                         "comercial": nome_comercial,
                         "detalles_del_provedor": provider_details,
                         "bienes_obras_servicos": service_details,
-                        "evidence": self.evidence(f"{self.PAGE_URL}/{current_id}"),
                     }
                 )
             else:
@@ -173,29 +167,3 @@ class CompraSal(NewCoreLib.NewCoreLib):
         else:
             console(f"\n{results} resultados encontrados")
 
-    def evidence(self, url: str):
-        """
-        Tira um screenshot da página pesquisada e retorna o base64.
-        :return: Base64 da imagem
-        :rtype: str
-        """
-        if self.browser is not None:
-            try:
-                self.page.goto(url, timeout=self.DEFAULT_TIMEOUT * 1000)
-                self.wait_for_element("body > app-root div.container")
-                return self.take_evidence()
-            except Exception:
-                return ""  # Evita que o Script quebre se não for possível tirar o screenshot
-        else:
-            return ""  # Retorna screenshot vazio se não for possivel abrir o navegador
-
-    def __del__(self):
-        """
-        Fecha o navegador e para o serviço do playwright.
-        :return: None
-        """
-        if self.browser is not None:
-            try:
-                self.teardown()
-            except Exception:
-                pass  # Evita que o Script quebre se não for possível fechar o navegador
