@@ -1,5 +1,4 @@
 import json
-import math
 import requests
 
 from robot.api.deco import keyword, library
@@ -18,7 +17,7 @@ class CompraSal(NewCoreLib.NewCoreLib):
     PAGE_URL = "https://unac.mh.gob.sv/comprasalweb/proveedores"
     API_URL = "https://unacv2.mh.gob.sv/comprasalmicro/portalpublico/api/v1"
     USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
-    API_PAGE_SIZE = 50
+    API_PAGE_SIZE = 20
     API_HEADERS = {
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "en-US,en;q=0.9",
@@ -53,39 +52,36 @@ class CompraSal(NewCoreLib.NewCoreLib):
         :return: None
         """
         # Variavéis de controle
-        page = 1
         records = None
         rows = []
         results = []
 
-        while page <= math.ceil((records or self.API_PAGE_SIZE) / self.API_PAGE_SIZE):
-            data = {
-                "page": page,
-                "size": self.API_PAGE_SIZE,
-                "nombre": str(name).upper(),
-            }
+        data = {
+            "page": 1,
+            "size": self.API_PAGE_SIZE,
+            "nombre": str(name).upper(),
+        }
 
-            console(f"\nBuscando página {page} de resultados para a consulta {name}")
-            search_response = self.make_request(
-                url=f"{self.API_URL}/proveedores", method="POST", data=data
-            )
+        console(f"\nBuscando resultados para a consulta {name}")
+        search_response = self.make_request(
+            url=f"{self.API_URL}/proveedores", method="POST", data=data
+        )
 
-            if search_response is not None and search_response.status_code == 200:
-                search_result = search_response.json()
-                records = search_result["totalRecords"]
+        if search_response is not None and search_response.status_code == 200:
+            search_result = search_response.json()
+            records = search_result["totalRecords"]
 
-                # Obtendo os ids da página atual
-                for row in search_result["content"]:
-                    rows.append(
-                        {
-                            "id": row["id"],
-                            "nombre": row["nombre"],
-                        }
-                    )
-            else:
-                error(f"Falhou em buscar dados na página {page}")
+            # Obtendo os ids da página atual
+            for row in search_result["content"]:
+                rows.append(
+                    {
+                        "id": row["id"],
+                        "nombre": row["nombre"],
+                    }
+                )
+        else:
+            error(f"Falhou em buscar resultados para a consulta {name}")
 
-            page += 1
 
         self.show_message_total_results(records)
 
@@ -121,8 +117,6 @@ class CompraSal(NewCoreLib.NewCoreLib):
                 )
             else:
                 error(f"Falhou ao obter informações do ID: {id}")
-
-        self.show_message_total_results(records)
 
         write_results(json.dumps({"data": results}, ensure_ascii=False))
 
