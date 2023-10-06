@@ -12,6 +12,8 @@ import base64
 
 @library(scope='GLOBAL', version='0.0.1')
 class NewCoreLib(object):
+    browser = None
+
     @keyword('Abrir o navegador em')
     def open_browser(self, url: str, headless: bool = True, slow_mo: float = None, navegador: str = 'firefox', ignore_https_errors: bool = False):
         '''
@@ -109,8 +111,8 @@ class NewCoreLib(object):
         return 'data:image/png;base64,{}'.format(evidence_b64)
 
     @keyword('Esperar')
-    def wait_sleep(self, time: str):
-        BuiltIn().sleep(time)
+    def wait_sleep(self, time_to_wait):
+        BuiltIn().sleep(time_to_wait)
 
     @keyword('RecaptchaV2 TRF4')
     def recaptchaV2(self, site_url: str, website_key: str):
