@@ -23,7 +23,6 @@ Buscar em TRF3 Criminal Pf
     Selecionar                                              ${CAMPO_TIPO_DOCUMENTO}  ${TIPO_DOCUMENTO}
     Digitar Texto Em Campo                                  ${cpf}  ${CAMPO_DOCUMENTO}
     Esperar                                                 3
-    Digitar Texto Em Campo                                  ${nome}     ${CAMPO_NOME}
     Selecionar                                              ${CAMPO_ABRANGENCIA}  ${TIPO_ABRANGENCIA}
     Esperar                                                 2
     RecaptchaV2 TRF3                                        ${URL_TRF3}     ${WEBSITE_KEY}
