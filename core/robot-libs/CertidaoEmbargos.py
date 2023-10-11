@@ -24,7 +24,7 @@ class CertidaoEmbargos(NewCoreLib.NewCoreLib):
             submit_button_xpath = '//html/body/div[1]/div/div/div/div/div/div/div/div/div/div/div/form/table/tbody/tr[2]/td/div/table/tbody/tr[3]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr[8]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td/button'
 
             console('Abrindo o Browser')
-            self.open_browser(url, ignore_https_errors=True)
+            self.open_browser(url, False, ignore_https_errors=True)
 
             self.wait_sleep(5)
 
@@ -75,7 +75,7 @@ class CertidaoEmbargos(NewCoreLib.NewCoreLib):
             submit_button_xpath = '//html/body/div[1]/div/div/div/div/div/div/div/div/div/div/div/form/table/tbody/tr[2]/td/div/table/tbody/tr[3]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr[8]/td/table/tbody/tr/td/table/tbody/tr/td/div/div[2]/span/table/tbody/tr/td/div/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td/button'
 
             console('Abrindo o Browser')
-            self.open_browser(url, ignore_https_errors=True)
+            self.open_browser(url, False, ignore_https_errors=True)
 
             self.wait_sleep(5)
 

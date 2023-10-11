@@ -1399,10 +1399,13 @@ class CoreLib(object):
             self.page.query_selector('//*[@id="submit"]').click()
             BuiltIn().sleep('5000ms')
 
-            while self.page.query_selector('//*[@id="modal-carregamento-certidao"]/div/div/div/div').is_hidden() != True:
-                console('Modal de processamento continua aberto, entidade grande ')
-                console("Esperando a resposta")
-                BuiltIn().sleep('15000ms')
+            if self.page.query_selector('//*[@id="modal-carregamento-certidao"]/div/div/div/div') != None:
+                while self.page.query_selector('//*[@id="modal-carregamento-certidao"]/div/div/div/div').is_hidden() != True:
+                    console('Modal de processamento continua aberto, entidade grande ')
+                    console("Esperando a resposta")
+                    BuiltIn().sleep('15000ms')
+                    if self.page.query_selector('//*[@id="modal-carregamento-certidao"]/div/div/div/div') == None:
+                        break
             console('Analisando resultado...')
             check_certidao = self.page.query_selector('//*[@id="ContainerImpressaoCertidao"]')
             check_dados_adicionais = self.page.query_selector('body > div > main > div.text-center > div > div > h5')
