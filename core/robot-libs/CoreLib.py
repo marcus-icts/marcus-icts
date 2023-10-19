@@ -42,6 +42,7 @@ class CoreLib(object):
         | Abrir o navegador em | www.google.com | False | 3000 |
         '''
         self.playwright = sync_playwright().start()
+        console(self.playwright)
         self.browser = self.playwright[navegador].launch(
             headless=headless, slow_mo=slow_mo)
         self.context = self.browser.new_context()
@@ -1426,13 +1427,13 @@ class CoreLib(object):
             raise Exception('Erro na comunicação com o fornecedor de solução de captcha. ' + solver.error_code)
 
         write_results(json.dumps(self.data, ensure_ascii=False))
-    
+
     def check_is_odd(self, number):
         num = int(number)
         if (num % 2) == 0:
             return False
         return True
-  
+
     @keyword('Pegar dados da tabela Uruguai')
     def tabela_uruguai(self, paginacao: str):
         self.data['found'] = True
@@ -1506,7 +1507,7 @@ class CoreLib(object):
     def mascara_cpf(self, cpf):
         cpf_formatado = '{}.{}.{}-{}'.format(cpf[:3], cpf[3:6], cpf[6:9], cpf[9:])
         return cpf_formatado
-    
+
     @keyword('Quitacao Participacao Eleitor')
     def quitacao_participacao_eleitor(self, cpf, titulo, nome,retry:int = 0):
         self.data['found'] = True
