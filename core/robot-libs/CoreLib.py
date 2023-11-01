@@ -42,6 +42,7 @@ class CoreLib(object):
         | Abrir o navegador em | www.google.com | False | 3000 |
         '''
         self.playwright = sync_playwright().start()
+        console(self.playwright)
         self.browser = self.playwright[navegador].launch(
             headless=headless, slow_mo=slow_mo)
         self.context = self.browser.new_context()
