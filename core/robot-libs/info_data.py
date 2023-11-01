@@ -11,25 +11,29 @@ def load_info_data(page):
     cui = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblCUI"]')
     result['cui'] = cui.inner_text().strip() if cui is not None else None
 
-    nombre = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
-    result['nombre'] = nombre.inner_text().strip() if nombre is not None else None
-
     tipo_organizacion = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblTipoOrganizacion"]')
     result['tipo_organizacion'] = tipo_organizacion.inner_text().strip() if tipo_organizacion is not None else None
 
     nit = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNIT"]')
     result['nit'] = nit.inner_text().strip() if nit is not None else None
 
-    field_nome_comercial = page.query_selector(
-        '#contenido > div:nth-child(4) > .cuadroResumen > div > div:nth-child(6) > div:first-child > span'
+
+    nombre = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
+    nombre_comercial = page.query_selector(
+        '#contenido > div:nth-child(4) > div.cuadroResumen > div > div:nth-child(6) > div:nth-child(2) > div.EtiquetaInfo'
     )
 
-    if field_nome_comercial is not None and field_nome_comercial.inner_text().startswith("Nombre Comercial"):
-        console("Nome Comercial encontrado.")
-        result['nome_comercial'] = field_nome_comercial.inner_text().strip()
-    else:
-        console("Nome Comercial não encontrado.")
-        result['nome_comercial'] = None
+    result['nombre'] = None
+    if nombre is not None:
+        result['nombre'] = nombre.inner_text().strip()
+    elif nombre_comercial is not None:
+        result['nombre'] = nombre_comercial.inner_text().strip()
+
+    result['nombre_comercial'] = None
+    if nombre_comercial is not None:
+        result['nombre_comercial'] = nombre_comercial.inner_text().strip()
+    elif nombre is not None:
+        result['nombre_comercial'] = nombre.inner_text().strip()
 
     console("Carregando informações adicionais.")
 
