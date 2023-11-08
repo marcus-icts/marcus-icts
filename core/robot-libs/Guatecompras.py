@@ -59,6 +59,7 @@ class Guatecompras(NewCoreLib.NewCoreLib):
             self.data['found'] = found
 
             write_results(json.dumps(self.data, ensure_ascii=False))
+            # console(json.dumps(self.data, ensure_ascii=False, indent=4))
 
             self.teardown()
 
@@ -101,11 +102,13 @@ class Guatecompras(NewCoreLib.NewCoreLib):
             for row in rows:
                 columns = row.query_selector_all("td")
                 link = columns[0].query_selector("a").get_attribute("href")
-                nombre = columns[1].query_selector("li").text_content().strip()
-                self.list_results.append({
-                    "nombre": nombre,
-                    "link": f"{self.BASE_URL}{link}"
-                })
+                nombres = columns[1].query_selector_all("li")
+                for nombre in nombres:
+                    nombre = nombre.text_content().strip()
+                    self.list_results.append({
+                        "nombre": nombre,
+                        "link": f"{self.BASE_URL}{link}"
+                    })
 
     def check_entity(self):
         for row in self.list_results:
@@ -120,7 +123,7 @@ class Guatecompras(NewCoreLib.NewCoreLib):
         """
 
         row = self.entity
-        console(f"\nCarregando dados para: {row['nombre']}")
+        console(f"\nCarregando dados para: {row['nombre'].upper()}")
         self.page.goto(row["link"])
         self.page.wait_for_load_state("domcontentloaded")
 
@@ -214,5 +217,3 @@ class Guatecompras(NewCoreLib.NewCoreLib):
         solver.set_key(env('CAPTCHA_KEY'))
         captcha_text = solver.solve_and_return_solution(base64.encodebytes(image))
         return captcha_text
-
-
