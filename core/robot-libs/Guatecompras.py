@@ -150,7 +150,7 @@ class Guatecompras(NewCoreLib.NewCoreLib):
             console("Carregando informações financeiras.")
             self.data |= theme_finance(self.page)
 
-        elif theme == "reputacao":
+        elif theme == "reputacional":
             console("Carregando informações de reputação.")
             self.data |= theme_reputation(self.page)
 

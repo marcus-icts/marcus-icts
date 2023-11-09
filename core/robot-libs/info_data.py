@@ -17,22 +17,31 @@ def load_info_data(page):
     nit = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNIT"]')
     result['nit'] = nit.inner_text().strip() if nit is not None else None
 
+    # Formato Antigo com Nome (Razão Social) e Nome Comercial diferentes
+    # nombre = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
+    # nombre_comercial = page.query_selector(
+    #     '#contenido > div:nth-child(4) > div.cuadroResumen > div > div:nth-child(6) > div:nth-child(2) > div.EtiquetaInfo'
+    # )
+
+    # result['nombre'] = None
+    # if nombre is not None:
+    #     result['nombre'] = nombre.inner_text().strip()
+    # elif nombre_comercial is not None:
+    #     result['nombre'] = nombre_comercial.inner_text().strip()
+
+    # result['nombre_comercial'] = None
+    # if nombre_comercial is not None:
+    #     result['nombre_comercial'] = nombre_comercial.inner_text().strip()
+    # elif nombre is not None:
+    #     result['nombre_comercial'] = nombre.inner_text().strip()
 
     nombre = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
-    nombre_comercial = page.query_selector(
-        '#contenido > div:nth-child(4) > div.cuadroResumen > div > div:nth-child(6) > div:nth-child(2) > div.EtiquetaInfo'
-    )
 
     result['nombre'] = None
+    result['nombre_comercial'] = None
+
     if nombre is not None:
         result['nombre'] = nombre.inner_text().strip()
-    elif nombre_comercial is not None:
-        result['nombre'] = nombre_comercial.inner_text().strip()
-
-    result['nombre_comercial'] = None
-    if nombre_comercial is not None:
-        result['nombre_comercial'] = nombre_comercial.inner_text().strip()
-    elif nombre is not None:
         result['nombre_comercial'] = nombre.inner_text().strip()
 
     console("Carregando informações adicionais.")
