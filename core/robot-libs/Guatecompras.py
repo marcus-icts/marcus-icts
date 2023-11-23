@@ -8,8 +8,8 @@ from theme_corruption import theme_corruption
 from theme_finance import theme_finance
 from theme_reputation import theme_reputation
 from robot.api.deco import keyword, library
-from robot.api.logger import console, error
-from utils import write_results
+from robot.api.logger import console
+from utils import write_results, solve_captcha_from_image
 
 import NewCoreLib
 
@@ -136,7 +136,7 @@ class Guatecompras(NewCoreLib.NewCoreLib):
             if self.resolve_captcha():
                 console("Captcha resolvido com sucesso.")
 
-        self.data |= load_info_data(self.page)
+        self.data |= load_info_data(self.page, self.name)
 
         if theme == "corrupcao":
             console("Carregando informações de corrupção.")
@@ -170,11 +170,12 @@ class Guatecompras(NewCoreLib.NewCoreLib):
         :param attempt: Número da tentativa atual
         :return: Boolean
         """
+
         image_captcha = self.page.query_selector(
             '//*[@id="MasterGC_ContentBlockHolder_CaptchaValidacion_CaptchaImage"]'
         )
         screenshot = image_captcha.screenshot()
-        captcha_text = self.solve_captcha_from_image(screenshot)
+        captcha_text = solve_captcha_from_image(screenshot)
 
         if captcha_text != 0:
             console(f"Captcha - Tentativa ({attempt}): {captcha_text}")
@@ -206,14 +207,3 @@ class Guatecompras(NewCoreLib.NewCoreLib):
                 return self.resolve_captcha(attempt + 1)
 
             return True
-
-    def solve_captcha_from_image(self, image):
-        """
-        Resolve o captcha da imagem
-        :param image: Imagem do captcha
-        :return: String
-        """
-        solver = dataUriCaptcha()
-        solver.set_key(env('CAPTCHA_KEY'))
-        captcha_text = solver.solve_and_return_solution(base64.encodebytes(image))
-        return captcha_text
