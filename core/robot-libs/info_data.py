@@ -9,16 +9,16 @@ def load_info_data(page, query_search):
     result = {}
 
     # Formato Antigo com CUI
-    # cui = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblCUI"]')
-    # result['cui'] = cui.inner_text().strip() if cui is not None else None
+    cui = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblCUI"]')
+    result['cui'] = cui.inner_text().strip() if cui is not None else None
 
     # Formato Antigo com NIT
     nit = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNIT"]')
     result['nit'] = nit.inner_text().strip() if nit is not None else None
 
     # Formato novo, onde CUI e NIT preservam a entidade a ser buscada
-    result['cui'] = query_search
-    result['nit'] = query_search
+    # result['cui'] = query_search
+    # result['nit'] = query_search
 
     tipo_organizacion = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblTipoOrganizacion"]')
     result['tipo_organizacion'] = tipo_organizacion.inner_text().strip() if tipo_organizacion is not None else None
@@ -46,16 +46,18 @@ def load_info_data(page, query_search):
     nombre_comercial = page.query_selector(
         '#contenido > div:nth-child(4) > div.cuadroResumen > div > div:nth-child(6) > div:nth-child(2) > div.EtiquetaInfo'
     )
-    documento = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblCUI"]')
 
     nombre_comercial_text = nombre_comercial.inner_text().strip() if nombre_comercial is not None else None
     nombre_text = nombre.inner_text().strip() if nombre is not None else None
-    documento_text = documento.inner_text().strip() if documento is not None else None
 
     nombre_final = ''
     nombre_final += nombre_comercial_text if nombre_comercial_text is not None else ''
     nombre_final += nombre_text if nombre_text is not None and nombre_final == '' else ''
-    nombre_final += (documento_text if nombre_final == '' else ' - ' + documento_text) if documento_text is not None else ''
+
+    # Adiciona o documento ao nome final
+    # documento = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblCUI"]')
+    # documento_text = documento.inner_text().strip() if documento is not None else None
+    # nombre_final += (documento_text if nombre_final == '' else ' - ' + documento_text) if documento_text is not None else ''
 
     result['nombre'] = nombre_final
     result['nombre_comercial'] = nombre_final

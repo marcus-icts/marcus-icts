@@ -172,6 +172,7 @@ class Guatecompras(NewCoreLib.NewCoreLib):
             '//*[@id="MasterGC_ContentBlockHolder_CaptchaValidacion_CaptchaImage"]'
         )
         screenshot = image_captcha.screenshot()
+
         captcha_text = solve_captcha_from_image(screenshot)
 
         if captcha_text != 0:
