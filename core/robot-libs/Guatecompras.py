@@ -1,8 +1,5 @@
-import base64
 import json
 
-from core.env import env
-from dataUriCaptcha import dataUriCaptcha
 from info_data import load_info_data
 from theme_corruption import theme_corruption
 from theme_finance import theme_finance
