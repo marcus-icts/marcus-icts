@@ -16,14 +16,13 @@ ${WEBSITE_KEY}                              6Le_CtAZAAAAAEbTeETvetg4zQ7kJI0NH5HN
 
 
 *** Tasks ***
-Buscar em TRF3 Civel Pf
+Buscar em Jfsp Civel Pf
     Abrir o navegador em                                    ${URL_TRF3}
     Esperar                                                 2
     Selecionar                                              ${CAMPO_TIPO_CERTIDAO}  ${TIPO_CERTIDAO}
     Selecionar                                              ${CAMPO_TIPO_DOCUMENTO}  ${TIPO_DOCUMENTO}
     Digitar Texto Em Campo                                  ${cpf}  ${CAMPO_DOCUMENTO}
     Esperar                                                 3
-    Digitar Texto Em Campo                                  ${nome}     ${CAMPO_NOME}
     Selecionar                                              ${CAMPO_ABRANGENCIA}  ${TIPO_ABRANGENCIA}
     Esperar                                                 2
     RecaptchaV2 TRF3                                        ${URL_TRF3}     ${WEBSITE_KEY}

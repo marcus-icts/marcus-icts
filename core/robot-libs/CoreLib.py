@@ -1393,15 +1393,26 @@ class CoreLib(object):
         g_response = solver.solve_and_return_solution() #resposta do captcha
         if g_response != 0:
             console("Inserindo resposta do captcha no textArea...")
+
             self.page.eval_on_selector('#g-recaptcha-response', '(el) => el.value =' +"'"+ g_response +"'")
 
             self.wait_sleep(10)
             self.page.query_selector('//*[@id="submit"]').click()
-            BuiltIn().sleep('15000ms')
+            BuiltIn().sleep('5000ms')
+
+            if self.page.query_selector('//*[@id="modal-carregamento-certidao"]/div/div/div/div') != None:
+                while self.page.query_selector('//*[@id="modal-carregamento-certidao"]/div/div/div/div').is_hidden() != True:
+                    console('Modal de processamento continua aberto, entidade grande ')
+                    console("Esperando a resposta")
+                    BuiltIn().sleep('15000ms')
+                    if self.page.query_selector('//*[@id="modal-carregamento-certidao"]/div/div/div/div') == None:
+                        break
             console('Analisando resultado...')
             check_certidao = self.page.query_selector('//*[@id="ContainerImpressaoCertidao"]')
             check_dados_adicionais = self.page.query_selector('body > div > main > div.text-center > div > div > h5')
-            if check_certidao != None or check_dados_adicionais != None:
+            errors = self.page.query_selector('//*[@id="encapsula_erros"]')
+
+            if check_certidao != None or check_dados_adicionais != None and errors == None:
                 self.data['found'] = True
                 check_processo = self.page.query_selector_all('//*[@class="registro-processo"]')
                 console(check_processo)
@@ -1419,9 +1430,6 @@ class CoreLib(object):
                     console('Finalizando após 4 tentativas')
                     raise Exception('Erro após 4 tentativas')
 
-
-            # else:
-            #     raise Exception('Falha ao resolver o captcha, erro inesperado.')        else:
         else :
             console("quebra recaptcha falhou, erro: " + solver.error_code)
             raise Exception('Erro na comunicação com o fornecedor de solução de captcha. ' + solver.error_code)
