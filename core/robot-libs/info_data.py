@@ -42,25 +42,20 @@ def load_info_data(page, query_search):
     #     result['nombre_comercial'] = nombre.inner_text().strip()
 
     # Formato novo, onde razão social e nome comercial são iguais
-    nombre = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
-    nombre_comercial = page.query_selector(
-        '#contenido > div:nth-child(4) > div.cuadroResumen > div > div:nth-child(6) > div:nth-child(2) > div.EtiquetaInfo'
+    razao_social = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
+
+    nome_comercial_div = page.query_selector(
+        '#contenido > div:nth-child(4) > div.cuadroResumen > div > div:nth-child(6)'
     )
+    nome_comercial_titulo = nome_comercial_div.query_selector('div:nth-child(1)')
 
-    nombre_comercial_text = nombre_comercial.inner_text().strip() if nombre_comercial is not None else None
-    nombre_text = nombre.inner_text().strip() if nombre is not None else None
+    if nome_comercial_titulo is not None and 'COMERCIAL' in nome_comercial_titulo.inner_text().strip().upper():
+        nombre_comercial = nome_comercial_div.query_selector('div:nth-child(2) > div.EtiquetaInfo')
+    else:
+        nombre_comercial = razao_social
 
-    nombre_final = ''
-    nombre_final += nombre_comercial_text if nombre_comercial_text is not None else ''
-    nombre_final += nombre_text if nombre_text is not None and nombre_final == '' else ''
-
-    # Adiciona o documento ao nome final
-    # documento = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblCUI"]')
-    # documento_text = documento.inner_text().strip() if documento is not None else None
-    # nombre_final += (documento_text if nombre_final == '' else ' - ' + documento_text) if documento_text is not None else ''
-
-    result['nombre'] = nombre_final
-    result['nombre_comercial'] = nombre_final
+    result['nombre'] = nombre_comercial.inner_text().strip().upper()
+    result['nombre_comercial'] = nombre_comercial.inner_text().strip().upper()
 
     console("Carregando informações adicionais.")
 
