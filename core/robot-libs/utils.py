@@ -1,5 +1,4 @@
 import base64
-import re
 
 from core.env import env
 from dataUriCaptcha import dataUriCaptcha
@@ -46,3 +45,14 @@ def convert_currency(page, amount, from_currency, to_currency):
 
     console(f"Valor convertido: {amount} -> {money_transformed}")
     return money_transformed
+
+def solve_captcha_from_image(image):
+    """
+    Resolve o captcha da imagem
+    :param image: Imagem do captcha
+    :return: String
+    """
+    solver = dataUriCaptcha()
+    solver.set_key(env('CAPTCHA_KEY'))
+    captcha_text = solver.solve_and_return_solution(base64.encodebytes(image))
+    return captcha_text

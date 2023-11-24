@@ -12,11 +12,14 @@ def theme_corruption(page):
     if table is not None:
         rows = table.query_selector_all('tbody > tr.FilaTablaDetalle')
 
+        urls = []
         for row in rows:
-            result = {}
-
             link_element = row.query_selector('td:nth-child(1) > a')
-            page.goto(f"{BASE_URL}{link_element.get_attribute('href')}")
+            urls.append(f"{BASE_URL}{link_element.get_attribute('href')}")
+
+        for url in urls:
+            result = {}
+            page.goto(url)
 
             page.wait_for_load_state("domcontentloaded")
 
@@ -39,7 +42,5 @@ def theme_corruption(page):
             result['status'] = status.inner_text().strip() if status is not None else None
 
             data.append(result)
-
-            page.go_back()
 
     return data
