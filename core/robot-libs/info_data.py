@@ -1,21 +1,27 @@
 from robot.api.logger import console
 
 
-def load_info_data(page):
+def load_info_data(page, query_search):
     """
     Carrega as informações cadastrais e de sócios
     """
     console("Carregando informações cadastrais.")
     result = {}
 
+    # Formato Antigo com CUI
     cui = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblCUI"]')
     result['cui'] = cui.inner_text().strip() if cui is not None else None
 
-    tipo_organizacion = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblTipoOrganizacion"]')
-    result['tipo_organizacion'] = tipo_organizacion.inner_text().strip() if tipo_organizacion is not None else None
-
+    # Formato Antigo com NIT
     nit = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNIT"]')
     result['nit'] = nit.inner_text().strip() if nit is not None else None
+
+    # Formato novo, onde CUI e NIT preservam a entidade a ser buscada
+    # result['cui'] = query_search
+    # result['nit'] = query_search
+
+    tipo_organizacion = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblTipoOrganizacion"]')
+    result['tipo_organizacion'] = tipo_organizacion.inner_text().strip() if tipo_organizacion is not None else None
 
     # Formato Antigo com Nome (Razão Social) e Nome Comercial diferentes
     # nombre = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
@@ -35,14 +41,21 @@ def load_info_data(page):
     # elif nombre is not None:
     #     result['nombre_comercial'] = nombre.inner_text().strip()
 
-    nombre = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
+    # Formato novo, onde razão social e nome comercial são iguais
+    razao_social = page.query_selector('//*[@id="MasterGC_ContentBlockHolder_lblNombreProv"]')
 
-    result['nombre'] = None
-    result['nombre_comercial'] = None
+    nome_comercial_div = page.query_selector(
+        '#contenido > div:nth-child(4) > div.cuadroResumen > div > div:nth-child(6)'
+    )
+    nome_comercial_titulo = nome_comercial_div.query_selector('div:nth-child(1)')
 
-    if nombre is not None:
-        result['nombre'] = nombre.inner_text().strip()
-        result['nombre_comercial'] = nombre.inner_text().strip()
+    if nome_comercial_titulo is not None and 'COMERCIAL' in nome_comercial_titulo.inner_text().strip().upper():
+        nombre_comercial = nome_comercial_div.query_selector('div:nth-child(2) > div.EtiquetaInfo')
+    else:
+        nombre_comercial = razao_social
+
+    result['nombre'] = nombre_comercial.inner_text().strip().upper()
+    result['nombre_comercial'] = nombre_comercial.inner_text().strip().upper()
 
     console("Carregando informações adicionais.")
 
