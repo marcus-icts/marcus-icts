@@ -1,6 +1,6 @@
 - 👋 Hi, I’m @marcus-icts
 - 👀 I’m interested in HTML/CSS/JS, Java, SQL, Python and Swift
-- 🌱 I’m currently learning all that I just said Im interested at the line above
+- 🌱 I’m currently learning all that I just said I'm interested at the line above
 - 💞️ I’m looking to collaborate on ICTS Team
 - 📫 How to reach me: marcus.sousa@icts.com.br
 - 😄 Pronouns: He/Him
