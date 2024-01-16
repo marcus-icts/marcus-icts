@@ -4,7 +4,7 @@
 - 💞️ I’m looking to collaborate on ICTS Team
 - 📫 How to reach me: marcus.sousa@icts.com.br
 - 😄 Pronouns: He/Him
-- ⚡ Fun fact: I am a Chemist 
+- ⚡ Fun fact: I am a Chemist and also a Software Developer
 
 <!---
 marcus-icts/marcus-icts is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
