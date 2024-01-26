@@ -43,14 +43,10 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
                 console("Clicando no botão 'Não consta' para o nome do pai")
                 self.click_at(campo_nao_consta_pai)
             else:
-                console("Preenchendo o nome da mãe")
+                console("Preenchendo o nome do pai")
                 self.input_text(nome_pai, campo_pai)
 
-            self.wait_sleep(1)
-
-            console('revalidando token recaptcha..')
-            self.page.evaluate("let captcha_response = 'g-recaptcha-' + $(form).attr('id');grecaptcha.ready(function(){grecaptcha.execute('6LeEYa0fAAAAAIwHU9lHw3fahlRNNb6yvv1Fjnbc', {action: '7fb57b96068b49c17ea252cf53024f00'}).then(function(token){if ( $( '#' + captcha_response ).length ) {$( '#' + captcha_response ).val(token);}else{$(form).prepend($('<input>', {type: 'hidden',id: captcha_response,name: captcha_response,value: token}));};});});")
-            self.wait_sleep(2)
+            self.wait_sleep(5)
 
             console('Esperando download da certidão')
             with self.page.expect_download() as download_info:
