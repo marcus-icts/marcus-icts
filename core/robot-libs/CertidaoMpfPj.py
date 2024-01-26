@@ -46,8 +46,12 @@ class CertidaoMpfPj(NewCoreLib.NewCoreLib):
             try:
                 response = requests.get(full_request, headers=headers)
                 console('Requisição para pegar o data id...')
+                console(response.status_code)
+                if (response.status_code != 200):
+                    raise Exception(response.content)
 
                 content = json.loads(response.content)
+                console(content)
 
                 dataId = content['data']
 
