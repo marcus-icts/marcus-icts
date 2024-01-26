@@ -59,6 +59,8 @@ class CertidaoMpfPj(NewCoreLib.NewCoreLib):
 
                 response = requests.get(url_to_download_pdf)
                 console('Baixando pdf...')
+                if (response.status_code != 200):
+                    raise Exception(response.content)
 
                 with open(pdf_file_name, 'wb') as pdf_file:
                     pdf_file.write(response.content)
