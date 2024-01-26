@@ -51,7 +51,6 @@ class CertidaoMpfPj(NewCoreLib.NewCoreLib):
                     raise Exception(response.content)
 
                 content = json.loads(response.content)
-                console(content)
 
                 dataId = content['data']
 
