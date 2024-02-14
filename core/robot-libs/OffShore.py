@@ -9,8 +9,8 @@ class OffShore(NewCoreLib.NewCoreLib):
     @keyword('offshore')
     def main(self, nome: str):
         url_site = 'https://offshoreleaks.icij.org'
-        field_search = '//html/body/div[3]/div[1]/div/form/input[1]'
-        btn_search = '//html/body/div[3]/div[1]/div/form/div/button'
+        field_search = '//html/body/div[4]/div[1]/div/form/input[1]'
+        btn_search = '//html/body/div[4]/div[1]/div/form/div/button'
         checkbox_terms = '//*[@id="accept"]'
         tbody = '#search_results > div.table-responsive > table > tbody tr'
         registered_in = 'body > div.container.node > div > div.node__content.col-lg-8.col-sm-12 > div.node__content__metadata.mb-4.pb-4.pt-4.border-bottom.border-light > div > div > div.col > ul > li:nth-child(1) > div.metadata__properties__row__attribute-value > a'
@@ -25,7 +25,7 @@ class OffShore(NewCoreLib.NewCoreLib):
             if self.page.query_selector(checkbox_terms) != None:
                 self.click_at(checkbox_terms)
                 self.wait_sleep(1)
-                self.click_at('//*[@id="__BVID__44___BV_modal_body_"]/form/div/div[2]/button')
+                self.click_at('//html/body/div[7]/div[1]/div/div/div/form/div/div[2]/button')
             self.wait_sleep(3)
             self.input_text('"' + nome + '"', field_search)
             self.wait_sleep(1)
