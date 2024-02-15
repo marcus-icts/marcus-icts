@@ -70,7 +70,7 @@ class OffShore(NewCoreLib.NewCoreLib):
                     console("Validando se existe modal de aceite dos termos")
                     if self.page.query_selector(checkbox_terms) != None:
                         self.click_at(checkbox_terms)
-                        self.click_at('//*[@id="__BVID__55___BV_modal_body_"]/form/div/div[2]/button')
+                        self.click_at('//html/body/div[8]/div[1]/div/div/div/form/div/div[2]/button')
                     self.wait_sleep(2)
                     result['registered_id'] = self.page.query_selector(registered_in).inner_text() if self.page.query_selector(registered_in) != None else 'Dado não encontrado'
                     result['agent'] = self.page.query_selector(agent).inner_text() if self.page.query_selector(agent) != None else 'Dado não encontrado'
