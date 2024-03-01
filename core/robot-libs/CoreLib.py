@@ -1048,7 +1048,7 @@ class CoreLib(object):
             self.data['evidence'] =  self.take_evidence()
         else :
             console('Caso positivo')
-            self.data['span'] = self.page.query_selector('//*[@id="msgErro"]/tbody').inner_text()
+            self.data['span'] = self.page.query_selector('//html/body/blockquote/p[2]/span').inner_text()
             console(self.data['span'])
             self.data['valid_response'] = True
             self.data['alert'] = True
