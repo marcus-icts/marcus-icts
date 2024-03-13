@@ -4,7 +4,7 @@ Library  ../core/robot-libs/CoreLib.py
 
 *** Tasks ***
 Buscar em TRF5 criminal PF
-    Abrir o navegador em                       https://certidoes.trf5.jus.br/certidoes2022/paginas/certidaoeleitoral.faces  false   4000
+    Abrir o navegador em                       https://certidoes.trf5.jus.br/certidoes2022/paginas/certidaoeleitoral.faces
     Selecionar                                  //*[@id="form:orgaoInternet"]  1
     Digitar texto em campo                          ${cpf}      //*[@id="form:cpfCnpj"]
     Clicar em                                       //*[@id="form:padPanel_content"]/div/span
