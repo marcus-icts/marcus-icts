@@ -86,7 +86,7 @@ class CertidaoMpfPj(NewCoreLib.NewCoreLib):
                 console('Remover o pdf...')
                 os.remove(pdf_file_name)
             except Exception as e:
-                console(str e)
+                console(str(e))
 
             write_results(json.dumps(data, ensure_ascii=False))
         except Exception as e:
