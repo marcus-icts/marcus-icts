@@ -3,7 +3,7 @@ Library           ../core/robot-libs/CoreLib.py
 
 *** Tasks ***
 Buscar em Latam Tema Corrupcao
-    Abrir o navegador em    https://www.guatecompras.gt/proveedores/busquedaProvee.aspx    ${False}    3000
+    Abrir o navegador em    https://www.guatecompras.gt/proveedores/busquedaProvee.aspx
     Digitar Texto Em Campo    ${nombre}    //*[@id="MasterGC_ContentBlockHolder_txtNuevaBusquedaNombre"]
     Resolver Captcha
     Dados Cadastrais e societários latam
