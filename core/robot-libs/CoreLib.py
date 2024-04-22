@@ -1145,11 +1145,14 @@ class CoreLib(object):
             string = ' Não foi possível emitir a certidão automaticamente. Por gentileza, apresente seu pedido de certidão negativa ao Departamento de Resolução e de Ação Sancionadora (Derad), via protocolo digital (https://www.bcb.gov.br/acessoinformacao/protocolodigital). Durante a protocolização, selecione o assunto "Processo Administrativo Sancionador".'
             string_outro_irregular = ' Não foi possível emitir a certidão automaticamente. Por gentileza, apresente seu pedido de certidão negativa via protocolo digital (https://www.bcb.gov.br/acessoinformacao/protocolodigital). Durante a protocolização, selecione o assunto "Outros assuntos", sugerindo se tratar de solicitação de "Certidão Negativa de Administração de Instituição em Liquidação Extrajudicial (Lei Complementar 64/1990, art. 1º, l, i)", a ser direcionado ao Departamento de Resolução e de Ação Sancionadora (Derad).'
             string_irregular = 'O CPF informado não está com a situação regular'
+
+            string_new = ' Não foi possível emitir a certidão automaticamente. Por gentileza, apresente seu pedido de certidão negativa ao Departamento de Resolução e de Ação Sancionadora (Derad), via protocolo digital (https://www.bcb.gov.br/acessoinformacao/protocolodigital). Durante a protocolização, selecione o assunto "Processo Administrativo Sancionador. Caso a certidão solicitada seja referente a outras pessoas, é necessário apresentar junto ao seu pedido uma procuração específica para esta finalidade.".'
             if check_true_captcha == None:
                 console('Passou pelo captcha corretamente')
             elif (
                     (self.page.query_selector(check).inner_text() == string) or
                     (self.page.query_selector(check).inner_text() == string_irregular) or
+                    (self.page.query_selector(check).inner_text() == string_new) or
                     (self.page.query_selector(check).inner_text() == string_outro_irregular)
                 ) :
                 console('Passou pelo captcha corretamente gerando alerta')
