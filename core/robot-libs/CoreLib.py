@@ -143,6 +143,7 @@ class CoreLib(object):
         | Pegar dados da tabela em JSON | .minha-tabela | 2 | 4 |
         '''
         table_data: dict = {'data': []}
+        self.wait_sleep(4)
         raw_data = self.page.query_selector(selector).inner_text().split('\n')
         tempheaders = raw_data[9:29]
         headers = [str for str in tempheaders if str != '\t']
