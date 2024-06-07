@@ -75,10 +75,16 @@ class RabbitMQ:
             self.channel.stop_consuming()
             self.channel.close()
             self.connection.close()
+
+            try:
+                os._exit(1)
+            except :
+                self.logger("Erro ao pegar exception de os._exit()")
             try:
                 sys.exit(1)
-            except SystemExit:
-                os._exit(1)
+            except SystemExit as e:
+                self.logger("Erro ao pegar SystemExit")
+                self.logger(str(e))
 
     def handle_interrupt(self, signum, frame):
         self.logger.console(f"Recebido sinal {signum} do {frame}.\n [!] Encerrando o consumidor.\n\n")
