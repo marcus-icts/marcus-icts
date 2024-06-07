@@ -47,7 +47,7 @@ def callback_wrapper(ch: BlockingChannel, method: Basic.Deliver, properties: Bas
 
 #   logger = get_logger()
 #   logger.info(" [x] Received %r" % body)
-    console(" [x] Received %r" % body)
+    console("\n\n["+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+"][x] Received %r" % body)
     try:
         on_message_callback(ch, method, properties, body)
     except Exception as e:
@@ -65,5 +65,5 @@ def callback_wrapper(ch: BlockingChannel, method: Basic.Deliver, properties: Bas
             properties
         )
         ch.basic_ack(method.delivery_tag)
-        console("\n [x] Unexpected error while processing message: %s. \n\nMessage: '%r'. \n\nThe message was repplyed with error\n\n" % (repr(e), request))
+        console("\n["+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+"][x] Unexpected error while processing message: %s. \n\nMessage: '%r'. \n\nThe message was repplyed with error\n\n" % (repr(e), request))
         raise InvalidMessagePayloadException("Ocorreu um erro, vamos matar o processo e subir novo consumer para garantir que todos os requisitos sejam restartados.\n\n")
