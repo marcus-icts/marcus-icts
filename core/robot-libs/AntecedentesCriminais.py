@@ -2,10 +2,10 @@ from utils import write_results
 from robot.api.logger import console
 from robot.api.deco import keyword, library
 from anticaptchaofficial.recaptchav2proxyless import *
+from robot.libraries.BuiltIn import BuiltIn
 
-import calendar
 import re
-import json, requests
+import json
 import base64
 import NewCoreLib
 
@@ -13,7 +13,7 @@ import NewCoreLib
 @library(scope='GLOBAL', version='0.0.1')
 class AntecedentesCriminais(NewCoreLib.NewCoreLib):
     @keyword('Antecedentes Criminais')
-    def antecedentes(self, cpf: str, nome: str, nascimento: str, retry: int = 0):
+    def antecedentes(self, cpf: str, nome: str, nascimento: str, mae: str = None, retry: int = 0):
         # try:
 
             console('\nTentativa ' + str(retry + 1) + ' de 5')
@@ -22,23 +22,32 @@ class AntecedentesCriminais(NewCoreLib.NewCoreLib):
             recaptcha_key = "6Le9QFkUAAAAAEtyzsbIZUcFbq8pT4KvKghL6Zb0"
 
             self.open_browser(url, False, ignore_https_errors=True)
-            
-            sanitized_cpf = re.sub('\D', '', cpf)
-            cpf_input_selector = 'pf-input-cpf input[type="text"]'
-            
+
+            cpf_input_selector = 'pf-input-cpf input[type="text"]'            
             self.wait_for_element(cpf_input_selector)
 
+            # insere o CPF
+
+            sanitized_cpf = re.sub('\D', '', cpf)
             self.input_text(sanitized_cpf, cpf_input_selector)
             self.wait_sleep(3)
 
+            # insere o nome
             nome_input_selector = 'input[formcontrolname="nome"]'
             self.input_text(nome, nome_input_selector)
             self.wait_sleep(3)
-             
+            
+            # entra com a data atraves do datepicker
             self.datepicker_manipulate(nascimento)
 
-            nome_mae_switch_selector = 'p-inputswitch#swt-possui-mae div'
-            self.click_at(nome_mae_switch_selector)
+            # se nao tiver o nome da mae, desativa o campo
+            if mae != None :
+                mae_input_selector = 'input[formcontrolname="nomeMae"]'
+                self.input_text(mae, mae_input_selector)
+                self.wait_sleep(3)
+            else:
+                nome_mae_switch_selector = 'p-inputswitch#swt-possui-mae div'
+                self.click_at(nome_mae_switch_selector)
             
             self.wait_sleep(3)
             
@@ -60,21 +69,23 @@ class AntecedentesCriminais(NewCoreLib.NewCoreLib):
             recaptcha_tries = 1
             while recaptcha_tries < 4:
                 if recaptcha_response == False:
-                    console("Problema na resolução do recaptcha. Tentativa número " + str(recaptcha_tries))
+                    console("Problema na resolução do RECAPTCHA. Tentativa número " + str(recaptcha_tries))
                     recaptcha_response = self.recaptchaV2(url, recaptcha_key)
                     recaptcha_tries += 1
                 else:
-                    console("Recaptcha resolvido com sucesso")
+                    console("RECAPTCHA resolvido com sucesso")
                     recaptcha_tries = 4
 
             if recaptcha_tries == 4 and recaptcha_response == False:
-                console("Após 4 tentativas não foi possível resolver o recaptcha")
-                raise Exception("Após 4 tentativas não foi possível resolver o recaptcha")
+                console("Após 4 tentativas não foi possível resolver o RECAPTCHA")
+                raise Exception("Após 4 tentativas, não foi possível resolver o RECAPTCHA")
 
             console("Inserindo resposta do captcha no textArea...")
             self.page.eval_on_selector('#g-recaptcha-response', '(el) => el.value =' +"'"+ recaptcha_response +"'")
-            self.page.query_selector('p-dynamicdialog button#btn-ok')
-            self.wait_sleep(5)
+            self.page.eval_on_selector('p-dynamicdialog button#btn-ok', '(el) => el.disabled = false')
+            self.wait_sleep(10)
+            self.page.query_selector('p-dynamicdialog button#btn-ok').click()
+            BuiltIn().sleep('5000ms')
 
             console('Iniciando o download do PDF...')
             
