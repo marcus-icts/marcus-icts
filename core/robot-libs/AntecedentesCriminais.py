@@ -19,7 +19,7 @@ class AntecedentesCriminais(NewCoreLib.NewCoreLib):
             console('\nTentativa ' + str(retry + 1) + ' de 5')
             
             url = 'https://servicos.pf.gov.br/epol-sinic-publico/'
-            recaptcha_key = "6Le9QFkUAAAAAEtyzsbIZUcFbq8pT4KvKghL6Zb0"
+            recaptcha_sitekey = "6Le9QFkUAAAAAEtyzsbIZUcFbq8pT4KvKghL6Zb0"
 
             self.open_browser(url, False, ignore_https_errors=True)
 
@@ -65,27 +65,36 @@ class AntecedentesCriminais(NewCoreLib.NewCoreLib):
                 raise Exception(message)
 
             console("Resolvendo RECAPTCHA v2")
-            recaptcha_response = self.recaptchaV2(url, recaptcha_key)
-            recaptcha_tries = 1
-            while recaptcha_tries < 4:
-                if recaptcha_response == False:
-                    console("Problema na resolução do RECAPTCHA. Tentativa número " + str(recaptcha_tries))
-                    recaptcha_response = self.recaptchaV2(url, recaptcha_key)
-                    recaptcha_tries += 1
-                else:
-                    console("RECAPTCHA resolvido com sucesso")
-                    recaptcha_tries = 4
 
-            if recaptcha_tries == 4 and recaptcha_response == False:
-                console("Após 4 tentativas não foi possível resolver o RECAPTCHA")
-                raise Exception("Após 4 tentativas, não foi possível resolver o RECAPTCHA")
-
-            console("Inserindo resposta do captcha no textArea...")
-            self.page.eval_on_selector('#g-recaptcha-response', '(el) => el.value =' +"'"+ recaptcha_response +"'")
             self.page.eval_on_selector('p-dynamicdialog button#btn-ok', '(el) => el.disabled = false')
-            self.wait_sleep(10)
+            recaptcha_iframe_name = self.page.locator('iframe[title="reCAPTCHA"]').get_attribute("name")
+            recaptcha_iframe = self.page.frame(name = recaptcha_iframe_name)
+            recaptcha_iframe.query_selector("div.recaptcha-checkbox-border").click()
+            self.wait_sleep(5)
+            s = recaptcha_iframe.locator("span#recaptcha-anchor")
+
+            if s.get_attribute("aria-checked") == "false":
+                recaptcha_response = self.recaptchaV2(url, recaptcha_sitekey)
+                recaptcha_tries = 1
+                while recaptcha_tries < 4:
+                    if recaptcha_response == False:
+                        console("Problema na resolução do RECAPTCHA. Tentativa número " + str(recaptcha_tries))
+                        recaptcha_response = self.recaptchaV2(url, recaptcha_sitekey)
+                        recaptcha_tries += 1
+                    else:
+                        console("RECAPTCHA resolvido com sucesso")
+                        recaptcha_tries = 4
+
+                if recaptcha_tries == 4 and recaptcha_response == False:
+                    console("Após 4 tentativas não foi possível resolver o RECAPTCHA")
+                    raise Exception("Após 4 tentativas, não foi possível resolver o RECAPTCHA")
+
+                console("Inserindo resposta do captcha no textArea...")
+                self.page.eval_on_selector('#g-recaptcha-response', "(el) => el.value ='" + recaptcha_response + "'")
+
+            self.wait_sleep(30)
             self.page.query_selector('p-dynamicdialog button#btn-ok').click()
-            BuiltIn().sleep('5000ms')
+            BuiltIn().sleep('2000ms')
 
             console('Iniciando o download do PDF...')
             
