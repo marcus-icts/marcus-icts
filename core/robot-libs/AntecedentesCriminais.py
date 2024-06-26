@@ -2,172 +2,155 @@ from utils import write_results
 from robot.api.logger import console
 from robot.api.deco import keyword, library
 from anticaptchaofficial.recaptchav2proxyless import *
-from robot.libraries.BuiltIn import BuiltIn
+from pypdf import PdfReader
+from datetime import datetime
 
-import re
-import json
-import base64
+import re, json, requests, base64, tempfile, os
 import NewCoreLib
 
 
 @library(scope='GLOBAL', version='0.0.1')
 class AntecedentesCriminais(NewCoreLib.NewCoreLib):
     @keyword('Antecedentes Criminais')
-    def antecedentes(self, cpf: str, nome: str, nascimento: str, mae: str = None, retry: int = 0):
-        # try:
-
+    def antecedentes(self, cpf: str, nome: str, nascimento:str, mae: str = None, retry: int = 0):
+        try:
             console('\nTentativa ' + str(retry + 1) + ' de 5')
             
+            url_validar_dados = 'https://servicos.pf.gov.br/sinic2-publico-rest/api/cac/validar-dados-cac'
+            console('Consultando validade da documentação, aguarde.')
+
+            cpf = re.sub('\D', '', cpf)
+            formatted_nascimento = datetime.strptime(nascimento, "%d/%m/%Y")
+            formatted_nascimento = formatted_nascimento.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+            body_validar_dados = {
+                "cpf": cpf,
+                "dtNascimento": formatted_nascimento,
+                "nome": nome
+            }
+
+            if mae != None:
+                body_validar_dados['nomeMae'] = mae
+
+            headers_validar_dados = {
+                "Accept": "application/json; charset=utf-8", 
+                "Content-Type": "application/json",
+            }
+
+            response_validar_dados = requests.post(url_validar_dados, json = body_validar_dados, headers = headers_validar_dados)
+            response_validar_dados_content = json.loads(response_validar_dados.content)
+
+            if response_validar_dados_content['dadosValidosReceita'] == False:
+                raise Exception('Dados insuficientes ou inválidos, verifique.{}'
+                                    .format(json.dumps(body_validar_dados, ensure_ascii = False)))
+
             url = 'https://servicos.pf.gov.br/epol-sinic-publico/'
-            recaptcha_sitekey = "6Le9QFkUAAAAAEtyzsbIZUcFbq8pT4KvKghL6Zb0"
+            url_emitir_cac = 'https://servicos.pf.gov.br/sinic2-publico-rest/api/cac/gerar-cac-pdf'
+            website_key = '6Le9QFkUAAAAAEtyzsbIZUcFbq8pT4KvKghL6Zb0'
 
-            self.open_browser(url, False, ignore_https_errors=True)
-
-            cpf_input_selector = 'pf-input-cpf input[type="text"]'            
-            self.wait_for_element(cpf_input_selector)
-
-            # insere o CPF
-
-            sanitized_cpf = re.sub('\D', '', cpf)
-            self.input_text(sanitized_cpf, cpf_input_selector)
-            self.wait_sleep(3)
-
-            # insere o nome
-            nome_input_selector = 'input[formcontrolname="nome"]'
-            self.input_text(nome, nome_input_selector)
-            self.wait_sleep(3)
+            console("Resolvendo recaptcha v2")
+            response = self.recaptchaV2(url, website_key)
+            tries = 1
             
-            # entra com a data atraves do datepicker
-            self.datepicker_manipulate(nascimento)
+            data = {}
+            while tries < 4:
+                if response == False:
+                    console("Problema na resolução do recaptcha. Tentativa número " + str(tries))
+                    response = self.recaptchaV2(url, website_key)
+                    tries += 1
+                else:
+                    console("Recaptcha resolvido com sucesso")
+                    tries = 4
 
-            # se nao tiver o nome da mae, desativa o campo
-            if mae != None :
-                mae_input_selector = 'input[formcontrolname="nomeMae"]'
-                self.input_text(mae, mae_input_selector)
-                self.wait_sleep(3)
-            else:
-                nome_mae_switch_selector = 'p-inputswitch#swt-possui-mae div'
-                self.click_at(nome_mae_switch_selector)
-            
-            self.wait_sleep(3)
-            
-            submit_button_selector = 'button#btn-emitir-cac'
-            self.click_at(submit_button_selector)
-            
+            if tries == 4 and response == False:
+                console("Após 4 tentativas não foi possível resolver o recaptcha")
+                raise Exception("Após 4 tentativas não foi possível resolver o recaptcha de antecedentes criminais")
+
+            console(response)
             self.wait_sleep(5)
-
-            # alerta de dados incorretos
-            incorrect_data_alert_selector = 'div.p-message.p-message-warn'
-            incorrect_data_alert = self.query_selector(incorrect_data_alert_selector)
-
-            if incorrect_data_alert != None:
-                message = self.query_selector(incorrect_data_alert_selector + " div span.p-message-detail").inner_text()
-                raise Exception(message)
-
-            console("Resolvendo RECAPTCHA v2")
-
-            self.page.eval_on_selector('p-dynamicdialog button#btn-ok', '(el) => el.disabled = false')
-            recaptcha_iframe_name = self.page.locator('iframe[title="reCAPTCHA"]').get_attribute("name")
-            recaptcha_iframe = self.page.frame(name = recaptcha_iframe_name)
-            recaptcha_iframe.query_selector("div.recaptcha-checkbox-border").click()
-            self.wait_sleep(5)
-            s = recaptcha_iframe.locator("span#recaptcha-anchor")
-
-            if s.get_attribute("aria-checked") == "false":
-                recaptcha_response = self.recaptchaV2(url, recaptcha_sitekey)
-                recaptcha_tries = 1
-                while recaptcha_tries < 4:
-                    if recaptcha_response == False:
-                        console("Problema na resolução do RECAPTCHA. Tentativa número " + str(recaptcha_tries))
-                        recaptcha_response = self.recaptchaV2(url, recaptcha_sitekey)
-                        recaptcha_tries += 1
-                    else:
-                        console("RECAPTCHA resolvido com sucesso")
-                        recaptcha_tries = 4
-
-                if recaptcha_tries == 4 and recaptcha_response == False:
-                    console("Após 4 tentativas não foi possível resolver o RECAPTCHA")
-                    raise Exception("Após 4 tentativas, não foi possível resolver o RECAPTCHA")
-
-                console("Inserindo resposta do captcha no textArea...")
-                self.page.eval_on_selector('#g-recaptcha-response', "(el) => el.value ='" + recaptcha_response + "'")
-
-            self.wait_sleep(30)
-            self.page.query_selector('p-dynamicdialog button#btn-ok').click()
-            BuiltIn().sleep('2000ms')
-
-            console('Iniciando o download do PDF...')
             
-            self.data['found'] = False
+            body = {
+                "nome": nome,
+                "cpf": cpf,
+                "listaNacionalidade": None,
+                "dtNascimento": formatted_nascimento,
+                "coPaisNascimento": None,
+                "noUfNascimento": None,
+                "noMunicipioNascimento": None,
+                "ufNascimento": None,
+                "coMunicipioNascimento": None,
+                "nomePai": "",
+                "nomeMae": "",
+                "documentoCac": [],
+                "stPossuiMae": False
+            }
 
-            with self.expect_download() as download_info:
-                download = download_info.value
-                data = open(download.path(), "rb").read()
-                console('PDF baixado com sucesso, convertendo para base64...')
-                evidence_b64 = re.sub(r"\n", '', base64.encodebytes(data).decode('utf-8'))
-                console('Conversão realizada com sucesso')
-                self.data['found'] = True
-                self.data['evidence_type'] = 'pdf'
-                self.data['evidence'] = 'data:application/pdf;base64,{}'.format(evidence_b64)
-            
-            write_results(json.dumps(self.data, ensure_ascii=False))
-        # except Exception as e:
-            # if retry < 4:
-            #     console('Ocorreu um erro não esperando: ' + str(e))
-            #     self.antecedentes(cpf, nome, nascimento, retry + 1)
-            # else:
-            #     raise Exception('Erro após 5 tentativas de pegar os Antecedentes Criminais')
-            
-            self.teardown()
+            if mae != None:
+                body['nomeMae'] = mae
+                body['stPossuiMae'] = True
+                console('Nome da mãe informado.')
 
-    def datepicker_manipulate(self, nascimento: str):
-        datepicker_modal_selector = "div.pf-datepicker.pf-component"
-        datepicker_previous_button_selector = datepicker_modal_selector + " button.pf-datepicker-prev"
-        datepicker_title_selector = datepicker_modal_selector + " div.pf-datepicker-title"
-        datepicker_month_selector = datepicker_title_selector + " span.pf-datepicker-month"
-        datepicker_year_selector = datepicker_title_selector + " span.pf-datepicker-year"
-        datepicker_days_table_selector = datepicker_modal_selector + " table.pf-datepicker-calendar"
-        
-        console('Abrindo datepicker...')
+            console(body)
+            headers = {
+                "Accept": "application/json; charset=utf-8",
+                "Token.Recaptcha.Google": response,
+                "Content-Type": "application/json",
+            }
 
-        self.query_selector("pf-calendar button.pf-datepicker-trigger").click()
+            console('Enviando requisição...')
+            response_api = requests.post(url_emitir_cac, json= body, headers= headers)
+            console("StatusCode: " + str(response_api.status_code)+"\n\n")
 
-        self.wait_for_element(datepicker_modal_selector)
+            if response_api.status_code == 200 :
+                content = json.loads(response_api.content)
+                # console(content)
+                data['found'] = True
+                data['nome'] = nome
+                data['cpf'] = cpf
+                data['nr_protocolo'] =  content['nrProtocolo']
+                data['evidence_type'] = 'pdf'
+                data['evidence'] = "data:application/pdf;base64,{}".format(content['pdf'])
 
-        months = [
-            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-        ]
+                pdf_data = base64.b64decode(content['pdf'])
 
-        day, month, year = nascimento.split('/')
-    
-        day = int(day)
-        month = int(month)
-        month_text = months[ month - 1]
+                # Criar um arquivo temporário
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf:
+                    temp_pdf.write(pdf_data)
+                    temp_pdf_path = temp_pdf.name
 
-        while True:
-            current_month = self.query_selector(datepicker_month_selector).inner_text()
-            current_year = self.query_selector(datepicker_year_selector).inner_text()
+                console("Arquivo PDF salvo temporariamente em: {}".format(temp_pdf_path))
 
-            if current_year == '1900':
-                console('Data não encontrada.')
-                break
-
-            # console("mes: " + current_month + ", ano: " + current_year + ", verificando...")
-
-            if current_year == year and current_month.lower() == month_text.lower():
-
-                days_selector = datepicker_days_table_selector + " tbody > tr td:not(.pf-datepicker-other-month) span"
-                clickable_days = self.page.query_selector_all(days_selector)
-
-                for clickable_day in clickable_days:
-                    day_value = clickable_day.inner_text()
+                with open(temp_pdf_path, "rb") as file:
+                    reader = PdfReader(file)
+                    number_of_pages = len(reader.pages)
+                    pdf_text = ""
                     
-                    if day_value == str(day):
-                        clickable_day.click()
-                        console('Data selecionada.')
-                        return
+                    for page_num in range(number_of_pages):
+                        page = reader.pages[page_num]
+                        pdf_text += page.extract_text()
+                
+                if os.path.exists(temp_pdf_path):
+                    os.remove(temp_pdf_path)
+                    console("Arquivo temporário deletado.")
 
-                console('Data não encontrada, houve algum problema.')
-                return
-            
-            self.query_selector(datepicker_previous_button_selector).click()
+                console("Conteúdo do PDF extraído:")
+                console(pdf_text)
+
+                nada_consta_str = 'NÃO CONSTA condenação'
+
+                if nada_consta_str.lower() in pdf_text.lower():
+                    data['nadaConsta'] = True
+                    data['alertas'] = 0
+                else:
+                    data['nadaConsta'] = False
+                    data['alertas'] = 1
+
+            else:
+                raise Exception('Consulta antecedentes criminais retornando status diferente de 200')
+            write_results(json.dumps(data, ensure_ascii=False))
+        except Exception as e:
+            if retry < 4:
+                console('Ocorreu um erro não esperando: ' + str(e))
+                self.antecedentes(cpf, nome, nascimento, mae, retry + 1)
+            else:
+                raise Exception('Erro após 5 tentativas de pegar os Antecedentes Criminais')
