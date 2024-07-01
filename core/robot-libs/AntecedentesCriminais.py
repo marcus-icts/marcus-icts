@@ -107,9 +107,8 @@ class AntecedentesCriminais(NewCoreLib.NewCoreLib):
                 data['found'] = True
                 data['nome'] = nome
                 data['cpf'] = cpf
-                data['nr_protocolo'] =  content['nrProtocolo']
-                data['evidence_type'] = 'pdf'
-                data['evidence'] = "data:application/pdf;base64,{}".format(content['pdf'])
+                data['numeroCertidao'] =  content['nrProtocolo']
+                data['dataCriacao'] = None
 
                 pdf_data = base64.b64decode(content['pdf'])
 
@@ -136,14 +135,20 @@ class AntecedentesCriminais(NewCoreLib.NewCoreLib):
                 console("Conteúdo do PDF extraído:")
                 console(pdf_text)
 
+                data_criacao_pattern = r"expedida em (\d{2}/\d{2}/\d{4}) às (\d{2}:\d{2})"
+                match = re.search(data_criacao_pattern, pdf_text)
+
+                if match:
+                    data['dataCriacao'] = match.group(1) + ' às ' + match.group(2)
+
                 nada_consta_str = 'NÃO CONSTA condenação'
 
                 if nada_consta_str.lower() in pdf_text.lower():
                     data['nadaConsta'] = True
-                    data['alertas'] = 0
+                    data['alertas'] = False
                 else:
                     data['nadaConsta'] = False
-                    data['alertas'] = 1
+                    data['alertas'] = True
 
             else:
                 raise Exception('Consulta antecedentes criminais retornando status diferente de 200')
