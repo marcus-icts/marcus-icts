@@ -47,47 +47,46 @@ class CertidaoMpfPj(NewCoreLib.NewCoreLib):
                 response = requests.get(full_request, headers=headers)
                 console('Requisição para pegar o data id...')
                 console(response.status_code)
-                if (response.status_code != 200):
-                    raise Exception(response.content)
-
                 content = json.loads(response.content)
 
-                dataId = content['data']
+                if (response.status_code == 200):
+                    dataId = content['data']
 
-                url_to_download_pdf = str(api_url) + '/download/' + str(dataId)
+                    url_to_download_pdf = str(api_url) + '/download/' + str(dataId)
 
-                response = requests.get(url_to_download_pdf)
-                console('Baixando pdf...')
-                if (response.status_code != 200):
-                    raise Exception(response.content)
+                    response = requests.get(url_to_download_pdf)
+                    console('Baixando pdf...')
+                    if (response.status_code != 200):
+                        raise Exception(response.content)
 
-                with open(pdf_file_name, 'wb') as pdf_file:
-                    pdf_file.write(response.content)
-                    console('Criando um novo pdf...')
+                    with open(pdf_file_name, 'wb') as pdf_file:
+                        pdf_file.write(response.content)
+                        console('Criando um novo pdf...')
 
-                with open(pdf_file_name, 'rb') as file:
-                    pdf_bytes = file.read()
-                    console('Lendo o arquivo PDF como bytes...')
+                    with open(pdf_file_name, 'rb') as file:
+                        pdf_bytes = file.read()
+                        console('Lendo o arquivo PDF como bytes...')
 
-                console('Codificar o arquivo PDF como Base64...')
-                pdf_base64_bytes = base64.b64encode(pdf_bytes)
-                evidence_b64 = pdf_base64_bytes.decode('utf-8')
+                    console('Codificar o arquivo PDF como Base64...')
+                    pdf_base64_bytes = base64.b64encode(pdf_bytes)
+                    evidence_b64 = pdf_base64_bytes.decode('utf-8')
 
-                data['evidence'] = 'data:application/pdf;base64,{}'.format(
-                    evidence_b64)
-                data['found'] = True
-                data['evidence_type'] = 'pdf'
+                    data['evidence'] = 'data:application/pdf;base64,{}'.format(
+                        evidence_b64)
+                    data['found'] = True
+                    data['evidence_type'] = 'pdf'
+                    console('Remover o pdf...')
+                    os.remove(pdf_file_name)
+                elif (response.status_code == 400 and (content['error']['message'] == 'CPF/CNPJ inexistente/inválido')):
+                    data['evidence'] = 'Pessoa jurídica não localizada com o CNPJ informado'
+                    data['found'] = True
+                    data['evidence_type'] = 'text'
+                else :
+                    raise Exception(response) 
 
             except requests.exceptions.RequestException as e:
                 data['found'] = False
                 raise e
-
-            try:
-                console('Remover o pdf...')
-                os.remove(pdf_file_name)
-            except Exception as e:
-                console(str(e))
-
             write_results(json.dumps(data, ensure_ascii=False))
         except Exception as e:
             raise Exception('resultado fora do esperado: Erro: ', e)
