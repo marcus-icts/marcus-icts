@@ -990,7 +990,7 @@ class CoreLib(object):
         texto = ''
         if check_regular :
             texto = self.page.query_selector('//*[@id="mainForm"]/div[1]/div/span').inner_text()
-            self.page.query_selector('//*[@id="mainForm:j_id51k"]').click()
+            self.page.query_selector('//*[@id="mainForm:j_id51"]').click()
             self.page.wait_for_selector('#mainForm > fieldset:nth-child(4) > div > p')
             declaracao = self.page.query_selector('#mainForm > fieldset:nth-child(4) > div > p').inner_text()
             validade = self.page.query_selector('//*[@id="mainForm"]/fieldset[4]/div/p').inner_text()
