@@ -19,7 +19,7 @@ class CertidaoMpfPj(NewCoreLib.NewCoreLib):
         try:
             data = {}
             cnpj_formatted = re.sub('[^0-9]', '', cnpj)
-            website_key = '6LeUowITAAAAAOIiAB441SS3EF77AS4ZuK0LFsaH'
+            website_key = '6LdjnRgqAAAAAFN26h_21doRx1LvTaG7AgQ1IbSb'
             pdf_file_name = 'certidao_mpf_pj_' + cnpj_formatted + '.pdf'
             url = 'https://aplicativos.mpf.mp.br/ouvidoria/app/cidadao/certidao'
             api_url = 'https://aplicativos.mpf.mp.br/ouvidoria/rest/v1/publico/certidao'
@@ -31,11 +31,11 @@ class CertidaoMpfPj(NewCoreLib.NewCoreLib):
             solver.set_website_url(url)
             solver.set_website_key(website_key)
             g_response = solver.solve_and_return_solution()
-            console('Recaptcha resolvido')
 
-            headers = {
-                "Content-Type": "application/x-www-form-urlencoded"
-            }
+            console('Recaptcha resolvido')
+            console(g_response)
+
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
             url_params = '/emitir?documento=' + \
                 str(cnpj_formatted) + '&recaptcha=' + \
@@ -43,19 +43,25 @@ class CertidaoMpfPj(NewCoreLib.NewCoreLib):
 
             full_request = str(api_url) + str(url_params)
 
+            console('Requisição para pegar o data id...')
+            console(full_request)
+
             try:
                 response = requests.get(full_request, headers=headers)
-                console('Requisição para pegar o data id...')
+                self.wait_sleep(2)
                 console(response.status_code)
-                content = json.loads(response.content)
-
                 if (response.status_code == 200):
+                    content = json.loads(response.content)
                     dataId = content['data']
 
                     url_to_download_pdf = str(api_url) + '/download/' + str(dataId)
+                    console(url_to_download_pdf)
 
                     response = requests.get(url_to_download_pdf)
+                    self.wait_sleep(2)
                     console('Baixando pdf...')
+                    console(response.status_code)
+                    # console(response.content)
                     if (response.status_code != 200):
                         raise Exception(response.content)
 
@@ -82,7 +88,7 @@ class CertidaoMpfPj(NewCoreLib.NewCoreLib):
                     data['found'] = True
                     data['evidence_type'] = 'text'
                 else :
-                    raise Exception(response) 
+                    raise Exception(response)
 
             except requests.exceptions.RequestException as e:
                 data['found'] = False
