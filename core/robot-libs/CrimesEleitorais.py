@@ -9,19 +9,22 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
     @keyword('crimes eleitorais')
     def abrir_crimes_eleitorais_para_evidencia(self, nome: str, cpf: str, data_nascimento: str, nome_mae: str = '', nome_pai: str = ''):
         try:
-            url = 'https://www.tse.jus.br/servicos-eleitorais/certidoes/certidao-de-crimes-eleitorais'
-            campo_nome_eleitor = '//*[@id="CE_NomeEleitor"]'
-            campo_cpf = '//*[@id="CE_NumeroTituloCPF"]'
-            campo_data_nascimento = '//*[@id="CE_DataNascimento"]'
-            campo_nao_consta_mae = '//*[@id="CE_NaoConstaMae"]'
-            campo_nao_consta_pai = '//*[@id="CE_NaoConstaPai"]'
-            campo_mae = '//*[@id="CE_NomeMae"]'
-            campo_pai = '//*[@id="CE_NomePai"]'
-            btn_emitir = '//*[@id="form-crimes-eleitorais"]/fieldset/button'
+            btn_selecionar_crimes_eleitorais = '#content > app-root > div > app-certidoes > div:nth-child(3) > app-menu-option:nth-child(2) > button'
+            url = 'https://www.tse.jus.br/servicos-eleitorais/autoatendimento-eleitoral#/certidoes-eleitor'
+            btn_selecionar_crimes_eleitorais = '#content > app-root > div > app-certidoes > div:nth-child(3) > app-menu-option:nth-child(2) > button'
+            campo_nome_eleitor = '#modal > div > div > div.modal-corpo > div.login-form-row > form > div.form-container > div.form-group-nome > input'
+            campo_cpf = '#modal > div > div > div.modal-corpo > div.login-form-row > form > div.form-container > div.form-group-titulo-cpf > input'
+            campo_data_nascimento = '//*[@id="modal"]/div/div/div[2]/div[2]/form/div[1]/div[3]/input'
+            campo_nao_consta_mae = '#modal > div > div > div.modal-corpo > div.login-form-row > form > div.form-container > div.form-group-nome-mae > div > span > input'
+            campo_nao_consta_pai = '#modal > div > div > div.modal-corpo > div.login-form-row > form > div.form-container > div.form-group-nome-pai > div > span > input'
+            campo_mae = '#modal > div > div > div.modal-corpo > div.login-form-row > form > div.form-container > div.form-group-nome-mae > div > input'
+            campo_pai = '#nomePai'
+            btn_emitir = '#modal > div > div > div.modal-corpo > div.login-form-row > form > div.menu-botoes > button.btn-tse'
             nome_pai = nome_pai if nome_pai != '' else 'NAO CONSTA'
             nome_mae = nome_mae if nome_mae != '' else 'NAO CONSTA'
 
             self.open_browser(url)
+            self.click_at(btn_selecionar_crimes_eleitorais)
             self.wait_sleep(5)
 
             console('Removendo modal lgpd')
