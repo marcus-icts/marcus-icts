@@ -10,7 +10,7 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
     def abrir_crimes_eleitorais_para_evidencia(self, nome: str, cpf: str, data_nascimento: str, nome_mae: str = '', nome_pai: str = ''):
         try:
             btn_selecionar_crimes_eleitorais = '#content > app-root > div > app-certidoes > div:nth-child(3) > app-menu-option:nth-child(2) > button'
-            wait_timeout = 30000
+            wait_timeout = 90000
             url = 'https://www.tse.jus.br/servicos-eleitorais/autoatendimento-eleitoral#/certidoes-eleitor'
             btn_selecionar_crimes_eleitorais = '#content > app-root > div > app-certidoes > div:nth-child(3) > app-menu-option:nth-child(2) > button'
             campo_nome_eleitor = '#modal > div > div > div.modal-corpo > div.login-form-row > form > div.form-container > div.form-group-nome > input'
