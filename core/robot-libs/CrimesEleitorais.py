@@ -9,22 +9,24 @@ class CrimesEleitorais(NewCoreLib.NewCoreLib):
     @keyword('crimes eleitorais')
     def abrir_crimes_eleitorais_para_evidencia(self, nome: str, cpf: str, data_nascimento: str, nome_mae: str = '', nome_pai: str = ''):
         try:
-            url = 'https://www.tse.jus.br/servicos-eleitorais/certidoes/certidao-de-crimes-eleitorais'
-            campo_nome_eleitor = '//*[@id="CE_NomeEleitor"]'
-            campo_cpf = '//*[@id="CE_NumeroTituloCPF"]'
-            campo_data_nascimento = '//*[@id="CE_DataNascimento"]'
-            campo_nao_consta_mae = '//*[@id="CE_NaoConstaMae"]'
-            campo_nao_consta_pai = '//*[@id="CE_NaoConstaPai"]'
-            campo_mae = '//*[@id="CE_NomeMae"]'
-            campo_pai = '//*[@id="CE_NomePai"]'
-            btn_emitir = '//*[@id="form-crimes-eleitorais"]/fieldset/button'
+            url = 'https://www.tse.jus.br/servicos-eleitorais/autoatendimento-eleitoral#/certidoes-eleitor'
+            btn_selecionar_crimes_eleitorais = '//*[@id="content"]/app-root/div/app-certidoes/div[1]/app-menu-option[2]/button'
+            campo_nome_eleitor = '//*[@id="modal"]/div/div/div[2]/div[2]/form/div[1]/div[1]/input'
+            campo_cpf = '//*[@id="modal"]/div/div/div[2]/div[2]/form/div[1]/div[2]/input'
+            campo_data_nascimento = '//*[@id="modal"]/div/div/div[2]/div[2]/form/div[1]/div[3]/input'
+            campo_nao_consta_mae = '//*[@id="modal"]/div/div/div[2]/div[2]/form/div[1]/div[4]/div/span'
+            campo_nao_consta_pai = '//*[@id="modal"]/div/div/div[2]/div[2]/form/div[1]/div[5]/div/span'
+            campo_mae = '//*[@id="modal"]/div/div/div[2]/div[2]/form/div[1]/div[4]/div/input'
+            campo_pai = '//*[@id="nomePai"]'
+            btn_emitir = '//*[@id="modal"]/div/div/div[2]/div[2]/form/div[2]/button[2]'
             nome_pai = nome_pai if nome_pai != '' else 'NAO CONSTA'
             nome_mae = nome_mae if nome_mae != '' else 'NAO CONSTA'
 
             self.open_browser(url)
+            self.click_at(btn_selecionar_crimes_eleitorais)
             self.wait_sleep(5)
 
-            console('Removendo modal lgpd')
+            console('Removendo modal lgpd teste teste')
             self.page.evaluate("document.querySelector('#modal-lgpd').remove()")
 
             self.input_text(nome, campo_nome_eleitor)
